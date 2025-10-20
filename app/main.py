@@ -27,7 +27,7 @@ class rootResponse(BaseModel):
 async def root():
     tz_info = settings.TZ_INFO
     try:
-        tz = ZoneInfo(settings.TIMEZONE)
+        tz = ZoneInfo(tz_info)
     except Exception:
         tz = ZoneInfo("UTC")
     now_utc = datetime.now()
