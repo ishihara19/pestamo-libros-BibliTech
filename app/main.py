@@ -34,6 +34,6 @@ async def root():
     now_tz = datetime.now(tz)
     
     return rootResponse.model_validate({
-        "message": "Bienvenido a la API BibliTech",
+        "message": "Bienvenido a la API BibliTech tz_info: "+tz_info,
         "now_utc":now_utc,
-        f"{tz_info}":now_tz})
+        "now_tz":now_tz})
