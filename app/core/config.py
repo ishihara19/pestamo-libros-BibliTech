@@ -1,7 +1,8 @@
 import os
+import dotenv
 from zoneinfo import ZoneInfo
 
-
+dotenv.load_dotenv()
 
 class Settings:
     # CORS
