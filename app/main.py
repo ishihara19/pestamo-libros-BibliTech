@@ -11,9 +11,9 @@ async def lifespan(app: FastAPI):
     yield
     print("Servidor cerrando...")
 
-app = FastAPI(lifespan=lifespan,title="API Biblioteca", description="API RESTful para la gestión de una biblioteca utilizando FastAPI y PostgreSQL", version="1.0.0")
+app = FastAPI(lifespan=lifespan,title="API BibliTech", description="API RESTful para la gestión de prestamo de libros", version="0.0.1")
 
 
 @app.get("/")
 async def root():
-    return {"message": "FastAPI + PostgreSQL + SQLAlchemy ORM funcionando 🚀"}
+    return {"message": "Bienvenido a la API BibliTech"}
