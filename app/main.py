@@ -1,33 +1,39 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from pydantic import BaseModel
+from .core.config import settings
+from.core.db.postgre import on_startup
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
     print("Servidor iniciando...")
-    
-    tz = os.getenv("TZ_INFO", "UTC")
-    print(f"Configurando zona horaria a: {tz}")
+    await on_startup()
 
-   
     yield
     print("Servidor cerrando...")
 
 app = FastAPI(lifespan=lifespan,title="API BibliTech", description="API RESTful para la gestión de prestamo de libros", version="0.0.1")
 
+class rootResponse(BaseModel):
+    message: str
+    now_utc: datetime
+    now_tz: datetime
 
-@app.get("/")
+@app.get("/", response_model=rootResponse)
 async def root():
-    tz_name = os.getenv("TZ_INFO", "UTC")  # Ej: "America/Bogota"
+    tz_info = settings.TZ_INFO
     try:
-        tz = ZoneInfo(tz_name)
+        tz = ZoneInfo(settings.TIMEZONE)
     except Exception:
         tz = ZoneInfo("UTC")
     now_utc = datetime.now()
     now_tz = datetime.now(tz)
-    return {"message": "Bienvenido a la API BibliTech",
-            "now_utc":now_utc,
-            "now_tz":now_tz}
+    
+    return rootResponse.model_validate({
+        "message": "Bienvenido a la API BibliTech",
+        "now_utc":now_utc,
+        f"{tz_info}":now_tz})
