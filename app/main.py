@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import os
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
@@ -19,7 +21,11 @@ app = FastAPI(lifespan=lifespan,title="API BibliTech", description="API RESTful 
 
 @app.get("/")
 async def root():
-    tz = os.getenv("TZ_INFO", "UTC")
+    tz_name = os.getenv("TZ_INFO", "UTC")  # Ej: "America/Bogota"
+    try:
+        tz = ZoneInfo(tz_name)
+    except Exception:
+        tz = ZoneInfo("UTC")
     now_utc = datetime.now()
     now_tz = datetime.now(tz)
     return {"message": "Bienvenido a la API BibliTech",
