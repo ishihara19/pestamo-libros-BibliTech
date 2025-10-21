@@ -5,7 +5,7 @@ from ..core.config import settings
 
 DEFAULT_TZ = ZoneInfo(settings.TZ_INFO)
 
-def to_localtime(dt: datetime, tz: ZoneInfo = DEFAULT_TZ) -> datetime:
+def to_localtime(dt: datetime, tz: ZoneInfo = DEFAULT_TZ) -> datetime | None:
     """
     Convierte un datetime con zona horaria (tz-aware) a la zona especificada.
     Si el datetime no tiene zona, se asume UTC.
