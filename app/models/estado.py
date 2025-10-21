@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, text, select, BigInteger, DateTime, Date
+from sqlalchemy import Column, Integer, String, text, DateTime
 from ..core.db.postgre import Base
 
 class Estado(Base):
