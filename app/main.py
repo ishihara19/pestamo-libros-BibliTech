@@ -4,7 +4,8 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from pydantic import BaseModel
 from .core.config import settings
-from.core.db.postgre import on_startup
+from .core.db.postgre import on_startup
+from .routes.estado_routes import estado_router
 
 
 @asynccontextmanager
@@ -17,6 +18,7 @@ async def lifespan(app: FastAPI):
     print("Servidor cerrando...")
 
 app = FastAPI(lifespan=lifespan,title="API BibliTech", description="API RESTful para la gestión de prestamo de libros", version="0.0.1")
+app.include_router(estado_router)
 
 class rootResponse(BaseModel):
     message: str
