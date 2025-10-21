@@ -1,6 +1,6 @@
 from typing import Generic, TypeVar
 from pydantic import BaseModel, Field
-
+import math
 # TypeVar para hacer la respuesta genérica
 T = TypeVar('T')
 
@@ -34,8 +34,9 @@ class PaginatedResponse(BaseModel, Generic[T]):
     @classmethod
     def create(cls, items: list[T], total: int, params: PaginationParams):
         """Método helper para crear una respuesta paginada"""
-        total_pages = (total + params.page_size - 1) // params.page_size  # ceil division
-        
+        page_size = max(1, params.page_size)
+        total_pages = math.ceil(total / page_size)
+
         return cls(
             items=items,
             total=total,
