@@ -1,11 +1,7 @@
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from sqlalchemy.orm import selectinload
 from fastapi import HTTPException
-
-from ..core.db.postgre import get_session
-from ..core.config import settings
 
 from ..models.estado import Estado
 from ..schemas.estado_sch import EstadoCreate, EstadoUpdate, EstadoView
@@ -56,17 +52,19 @@ class EstadoService:
         estados = result.scalars().all()
         return [EstadoView.model_validate(estado) for estado in estados]
     
+    
     @staticmethod
-    async def listar_estado_usuario(
+    async def listar_estado_por_tipo(
         db: AsyncSession,
+        tipo: str,
         pagination: PaginationParams | None = None
     ) -> list[EstadoView] | PaginatedResponse[EstadoView]:
-        """Listar estados de tipo usuario con paginación opcional."""
-        base_query = select(Estado).where(Estado.tipo == 'usuario')
+        """Listar estados por tipo con paginación opcional."""
+        base_query = select(Estado).where(Estado.tipo == tipo)
         
         if pagination:
             # Contar total
-            count_query = select(func.count(Estado.id)).where(Estado.tipo == 'usuario')
+            count_query = select(func.count(Estado.id)).where(Estado.tipo == tipo)
             total_result = await db.execute(count_query)
             total = total_result.scalar()
             
@@ -81,55 +79,7 @@ class EstadoService:
         result = await db.execute(base_query)
         estados = result.scalars().all()
         return [EstadoView.model_validate(estado) for estado in estados]
-    
-    @staticmethod
-    async def listar_estado_libro(
-        db: AsyncSession,
-        pagination: PaginationParams | None = None
-    ) -> list[EstadoView] | PaginatedResponse[EstadoView]:
-        """Listar estados de tipo libro con paginación opcional."""
-        base_query = select(Estado).where(Estado.tipo == 'libro')
         
-        if pagination:
-            count_query = select(func.count(Estado.id)).where(Estado.tipo == 'libro')
-            total_result = await db.execute(count_query)
-            total = total_result.scalar()
-            
-            query = base_query.offset(pagination.offset).limit(pagination.limit)
-            result = await db.execute(query)
-            estados = result.scalars().all()
-            
-            items = [EstadoView.model_validate(estado) for estado in estados]
-            return PaginatedResponse.create(items, total, pagination)
-        
-        result = await db.execute(base_query)
-        estados = result.scalars().all()
-        return [EstadoView.model_validate(estado) for estado in estados]
-    
-    @staticmethod
-    async def listar_estado_prestamo(
-        db: AsyncSession,
-        pagination: PaginationParams | None = None
-    ) -> list[EstadoView] | PaginatedResponse[EstadoView]:
-        """Listar estados de tipo prestamo con paginación opcional."""
-        base_query = select(Estado).where(Estado.tipo == 'prestamo')
-        
-        if pagination:
-            count_query = select(func.count(Estado.id)).where(Estado.tipo == 'prestamo')
-            total_result = await db.execute(count_query)
-            total = total_result.scalar()
-            
-            query = base_query.offset(pagination.offset).limit(pagination.limit)
-            result = await db.execute(query)
-            estados = result.scalars().all()
-            
-            items = [EstadoView.model_validate(estado) for estado in estados]
-            return PaginatedResponse.create(items, total, pagination)
-        
-        result = await db.execute(base_query)
-        estados = result.scalars().all()
-        return [EstadoView.model_validate(estado) for estado in estados]
-    
     @staticmethod
     async def obtener_estado_id(id: int, db: AsyncSession) -> EstadoView:
         """Obtener un estado por su ID."""
@@ -147,7 +97,7 @@ class EstadoService:
         if not estado:
             raise HTTPException(status_code=404, detail="Estado no encontrado")
         
-        for key, value in estado_update.model_dump().items():
+        for key, value in estado_update.model_dump(exclude_unset=True).items():
             setattr(estado, key, value)
         
         await db.commit()

@@ -17,7 +17,6 @@ async def crear_estado(
     """Crear un nuevo estado"""
     return await EstadoService.create_estado(estado, db)
 
-""""""
 @estado_router.get("", response_model=list[EstadoView] | PaginatedResponse[EstadoView])
 async def listar_estados(
     db: AsyncSession = Depends(get_session),
@@ -34,54 +33,26 @@ async def listar_estados(
     
     return await EstadoService.listar_estados(db, pagination)
 
-
-@estado_router.get("/usuario", response_model=list[EstadoView] | PaginatedResponse[EstadoView])
-async def listar_estados_usuario(
+@estado_router.get("/tipo", response_model=list[EstadoView] | PaginatedResponse[EstadoView])
+async def listar_estados_por_tipo(
     db: AsyncSession = Depends(get_session),
-    page: int | None = Query(None, ge=1),
-    page_size: int | None = Query(None, ge=1, le=100)
+    type: str = Query(description=(
+            "Tipo de estado. Ejemplos válidos:\n"
+            "- usuario\n"
+            "- libro\n"
+            "- prestamo"
+        ), default="usuario"),
+    page: int | None = Query(None, ge=1, description="Número de página"),
+    page_size: int | None = Query(None, ge=1, le=100, description="Items por página")
 ):
-    """Listar estados de tipo usuario
+    """Listar estados de tipo específico
     Usa paginación si se proveen los parámetros page y page_size.
     """
     pagination = None
     if page is not None and page_size is not None:
         pagination = PaginationParams(page=page, page_size=page_size)
     
-    return await EstadoService.listar_estado_usuario(db, pagination)
-
-
-@estado_router.get("/libro", response_model=list[EstadoView] | PaginatedResponse[EstadoView])
-async def listar_estados_libro(
-    db: AsyncSession = Depends(get_session),
-    page: int | None = Query(None, ge=1),
-    page_size: int | None = Query(None, ge=1, le=100)
-):
-    """Listar estados de tipo libro
-    Usa paginación si se proveen los parámetros page y page_size.
-    """
-    pagination = None
-    if page is not None and page_size is not None:
-        pagination = PaginationParams(page=page, page_size=page_size)
-    
-    return await EstadoService.listar_estado_libro(db, pagination)
-
-
-@estado_router.get("/prestamo", response_model=list[EstadoView] | PaginatedResponse[EstadoView])
-async def listar_estados_prestamo(
-    db: AsyncSession = Depends(get_session),
-    page: int | None = Query(None, ge=1),
-    page_size: int | None = Query(None, ge=1, le=100)
-):
-    """Listar estados de tipo prestamo
-    Usa paginación si se proveen los parámetros page y page_size.
-    """
-    pagination = None
-    if page is not None and page_size is not None:
-        pagination = PaginationParams(page=page, page_size=page_size)
-    
-    return await EstadoService.listar_estado_prestamo(db, pagination)
-
+    return await EstadoService.listar_estado_por_tipo(db, type, pagination)
 
 @estado_router.get("/{id}", response_model=EstadoView)
 async def obtener_estado(
