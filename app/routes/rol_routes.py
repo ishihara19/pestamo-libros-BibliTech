@@ -39,7 +39,7 @@ async def obtener_rol(
     db: AsyncSession = Depends(get_session)
 ):
     """Obtener un rol por su ID"""
-    rol =  await RolService.obtener_role(id, db)
+    rol = await RolService.obtener_role(id, db)
     if not rol:       
         raise HTTPException(status_code=404, detail="Rol no encontrado")
     return rol
