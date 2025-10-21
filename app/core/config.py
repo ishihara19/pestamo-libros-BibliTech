@@ -12,7 +12,8 @@ class Settings:
         "https://bv2x6hss-8000.use2.devtunnels.ms/",
     ]
     TZ_INFO = os.getenv("TZ_INFO", "UTC")
-    
+
+    PREFIX_API_VERSION = os.getenv("PREFIX_API_VERSION", "/api/v")
     # DATABASE PostgreSQL
     POSTGRES_USER = os.getenv("POSTGRES_USER")
     POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")

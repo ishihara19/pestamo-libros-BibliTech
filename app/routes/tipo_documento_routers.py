@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException
 
 from ..schemas.tipo_documento_sch import TipoDocumentoCreate, TipoDocumentoView, TipoDocumentoUpdate
 from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
@@ -39,8 +40,7 @@ async def obtener_tipo_documento(
 ):
     """Obtener un tipo de documento por su ID"""
     tipo_documento =  await TipoDocumentoService.obtener_tipo_documento(id, db)
-    if not tipo_documento:
-        from fastapi import HTTPException
+    if not tipo_documento:       
         raise HTTPException(status_code=404, detail="Tipo de documento no encontrado")
     return tipo_documento
 
