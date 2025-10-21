@@ -25,7 +25,7 @@ async def listar_estados(
 ):
     """
     Listar todos los estados.
-    Usa paginación si se proveen los parámetros page y page_size.    
+    Usa paginación si se proveen los parámetros page y page_size.
     """
     pagination = None
     if page is not None and page_size is not None:

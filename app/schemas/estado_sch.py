@@ -11,8 +11,10 @@ class EstadoBase(BaseModel):
 class EstadoCreate(EstadoBase):
     pass
 
-class EstadoUpdate(EstadoBase):
-    pass
+class EstadoUpdate(BaseModel):
+    nombre: Optional[str] = Field(None, max_length=50)
+    descripcion: Optional[str] = Field(None, max_length=300)
+    tipo: Optional[str] = Field(None, max_length=50)
 
 class EstadoView(EstadoBase):
     id: int
@@ -21,7 +23,7 @@ class EstadoView(EstadoBase):
 
     model_config = ConfigDict(from_attributes=True)
     @classmethod
-    def model_validate(cls, obj):
+    def model_validate(cls, obj) -> 'EstadoView':
         instance = super().model_validate(obj)
         # Solo convertir para mostrar
         instance.creado_en = to_localtime(instance.creado_en)
