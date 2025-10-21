@@ -7,7 +7,6 @@ from .core.config import settings
 from .core.db.postgre import on_startup
 from .routes.estado_routes import estado_router
 from .routes.tipo_documento_routers import tipo_documento_router
-from .core.config import settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
