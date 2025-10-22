@@ -1,5 +1,4 @@
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
-from pydantic import EmailStr
+from fastapi_mail import ConnectionConfig
 from ..core.config import settings  # tu archivo de configuración
 
 conf = ConnectionConfig(
@@ -8,7 +7,7 @@ conf = ConnectionConfig(
     MAIL_FROM = settings.MAIL_FROM,
     MAIL_PORT = settings.MAIL_PORT,
     MAIL_SERVER = settings.MAIL_SERVER,
-    MAIL_FROM_NAME = "Mi App",
+    MAIL_FROM_NAME = "BibliTech Support",
     MAIL_STARTTLS = True,
     MAIL_SSL_TLS = False,
     USE_CREDENTIALS = True,
