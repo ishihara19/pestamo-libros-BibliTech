@@ -18,3 +18,10 @@ def to_localtime(dt: datetime, tz: ZoneInfo = DEFAULT_TZ) -> datetime | None:
         dt = dt.replace(tzinfo=ZoneInfo("UTC"))
     
     return dt.astimezone(tz)
+
+def get_time_now() -> datetime:
+    """
+    Devuelve la hora actual en la zona horaria configurada (settings.TZ_INFO)
+    """
+    now_utc = datetime.now(tz=ZoneInfo("UTC"))
+    return to_localtime(now_utc)
