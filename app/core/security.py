@@ -50,11 +50,10 @@ async def authenticate_user(email: str, password: str, db: AsyncSession):
     """
     
     email = normalizar_correo(email)
-    async with db as session:
-        result = await session.execute(
-            select(Usuario).where(Usuario.correo == email)
-        )
-        user = result.scalars().first()
+    result = await db.execute(
+        select(Usuario).where(Usuario.correo == email)
+    )
+    user = result.scalars().first()
 
     if not user or not verify_password(password, user.contrasena):
         raise HTTPException(status_code=401, detail="Invalid email or password")
