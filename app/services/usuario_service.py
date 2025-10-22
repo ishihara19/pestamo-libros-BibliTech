@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from fastapi import HTTPException
+from datetime import datetime, timedelta, timezone
 
 from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
 from ..models.usuario import Usuario
@@ -88,7 +89,7 @@ class UsuarioService:
         id: int, 
         usuario_update: UsuarioUpdateContrasena, 
         db: AsyncSession
-    ) -> None:
+    ) -> UsuarioMensaje:
         """Actualizar la contraseña de un usuario."""
         result = await db.execute(select(Usuario).where(Usuario.id == id))
         usuario = result.scalar()
@@ -115,6 +116,7 @@ class UsuarioService:
         
         token = generar_token()
         usuario.token = token 
+        usuario.token_expiracion = datetime.now(timezone.utc) + timedelta(minutes=10)
         await db.commit()
         
         await enviar_correo_restablecimiento(usuario.correo, token)
@@ -122,16 +124,23 @@ class UsuarioService:
         return UsuarioMensaje(message="Correo de restablecimiento enviado")
 
     @staticmethod
-    async def verificar_token_usuario(verificacion: UsuarioVerificarToken, db: AsyncSession) -> None:
+    async def verificar_token_usuario(verificacion: UsuarioVerificarToken, db: AsyncSession) -> UsuarioMensaje:
         """Verificar el token de restablecimiento de contraseña."""
         result = await db.execute(select(Usuario).where(Usuario.correo == verificacion.correo))
         usuario = result.scalar()
+        
         if not usuario:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
         if usuario.token != verificacion.token:
             raise HTTPException(status_code=400, detail="Token inválido")
+        
+        if not usuario.token_expiracion or usuario.token_expiracion < datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Token expirado")
+        
         usuario.contrasena = hash_password(verificacion.contrasena_nueva)
-        usuario.token = None  # Invalidate the token after use
+        usuario.token = None 
+        usuario.token_expiracion = None
         db.add(usuario)
         await db.commit()
         

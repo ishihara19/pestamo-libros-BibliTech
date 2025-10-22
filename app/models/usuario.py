@@ -20,6 +20,7 @@ class Usuario(Base):
     estado_id = Column(Integer, ForeignKey("estado.id"), nullable=False, server_default="2")
     rol_id = Column(Integer, ForeignKey("rol.id"), nullable=False)
     token = Column(String(6), nullable=True)
+    token_expiracion = Column(DateTime(timezone=True), nullable=True)
     telefono = Column(String(20), nullable=True)
     direccion = Column(String(200), nullable=True)
     fecha_nacimiento = Column(Date, nullable=True)
