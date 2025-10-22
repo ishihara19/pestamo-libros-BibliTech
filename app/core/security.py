@@ -4,6 +4,7 @@ from datetime import timedelta
 from sqlalchemy import select
 from fastapi import Request
 from jose import jwt
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 from ..models.usuario import Usuario
@@ -38,7 +39,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-async def authenticate_user(email: str, password: str, request: Request):
+async def authenticate_user(email: str, password: str, db: AsyncSession):
     """
     Authenticate a user by verifying their email and password.
     Args:
@@ -49,8 +50,8 @@ async def authenticate_user(email: str, password: str, request: Request):
     """
     
     email = normalizar_correo(email)
-    async with get_session(request) as db:
-        result = await db.execute(
+    async with db as session:
+        result = await session.execute(
             select(Usuario).where(Usuario.correo == email)
         )
         user = result.scalars().first()

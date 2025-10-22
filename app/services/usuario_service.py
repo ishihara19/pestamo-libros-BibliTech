@@ -9,7 +9,7 @@ from ..schemas.usuario_sch import UsuarioCreate, UsuarioUpdatePerfil, UsuarioVie
 from ..core.security import hash_password, verify_password
 from ..utils.generar_token import generar_token
 from ..utils.enviar_correo import enviar_correo_restablecimiento
-
+from ..core.config import settings
 
 class UsuarioService:
     
@@ -116,7 +116,7 @@ class UsuarioService:
         
         token = generar_token()
         usuario.token = token 
-        usuario.token_expiracion = datetime.now(timezone.utc) + timedelta(minutes=10)
+        usuario.token_expiracion = datetime.now(timezone.utc) + timedelta(minutes=settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES)
         await db.commit()
         
         await enviar_correo_restablecimiento(usuario.correo, token)

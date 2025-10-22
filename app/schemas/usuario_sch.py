@@ -4,7 +4,7 @@ from typing import Optional
 import re
 
 from ..utils.tiempo_tz import to_localtime
-from ..utils.utils import normalizar_correo
+from ..utils.utils import normalizar_correo, validar_complejidad_contrasena
 
 
 class UsuarioBase(BaseModel):
@@ -23,21 +23,7 @@ class UsuarioBase(BaseModel):
     @classmethod
     def validar_y_normalizar_correo(cls, v: str) -> str:
         """Aplica normalización al correo electrónico."""
-        return normalizar_correo(v)
-    
-def _validate_password_complexity(v: str) -> str:
-    """Valida la complejidad de la contraseña."""
-    if not re.search(r"[a-z]", v):
-        raise ValueError("La contraseña debe contener al menos una letra minúscula")
-    if not re.search(r"[A-Z]", v):
-        raise ValueError("La contraseña debe contener al menos una letra mayúscula")
-    if not re.search(r"[0-9]", v):
-        raise ValueError("La contraseña debe contener al menos un número")
-    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-        raise ValueError("La contraseña debe contener al menos un carácter especial")
-    return v  
-
-  
+        return normalizar_correo(v)    
 
 class UsuarioCreate(UsuarioBase):
     contrasena: str = Field(..., min_length=8, max_length=255)
@@ -45,7 +31,7 @@ class UsuarioCreate(UsuarioBase):
     @field_validator("contrasena")
     @classmethod
     def password_complexity(cls, v: str) -> str:
-        return _validate_password_complexity(v)   
+        return validar_complejidad_contrasena(v)
 
 class UsuarioUpdateAdmin(BaseModel):
     correo: Optional[EmailStr] = None
@@ -79,7 +65,7 @@ class UsuarioUpdateContrasena(BaseModel):
     @field_validator("contrasena_nueva")
     @classmethod
     def password_complexity(cls, v: str) -> str:
-        return _validate_password_complexity(v)
+        return validar_complejidad_contrasena(v)
     
 class UsuarioLogin(BaseModel):
     correo: EmailStr = Field(..., max_length=100)
@@ -114,7 +100,7 @@ class UsuarioVerificarToken(BaseModel):
     @field_validator("contrasena_nueva")
     @classmethod
     def password_complexity(cls, v: str) -> str:
-        return _validate_password_complexity(v)
+        return validar_complejidad_contrasena(v)
 
 class UsuarioCambiarEstadoAdmin(BaseModel):
     estado_id: int
