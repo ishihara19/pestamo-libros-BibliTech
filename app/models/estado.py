@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, String, text, DateTime
 from ..core.db.postgre import Base
+from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 
 class Estado(Base):
     __tablename__ = 'estado'
@@ -8,6 +10,6 @@ class Estado(Base):
     nombre = Column(String(50), nullable=False)
     descripcion = Column(String(300), nullable=True)
     tipo = Column(String(50), nullable=False)
-    creado_en = Column(DateTime(timezone=True), nullable=False, server_default=text("CURRENT_TIMESTAMP"))
-    actualizado_en = Column(DateTime(timezone=True), nullable=True, server_default=text("CURRENT_TIMESTAMP"), onupdate=text("CURRENT_TIMESTAMP"))
-    
+    creado_en = Column(DateTime(timezone=True), server_default=func.now())
+    actualizado_en = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    usuarios = relationship("Usuario", back_populates="estado")

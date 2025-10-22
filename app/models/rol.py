@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, text, DateTime
 from ..core.db.postgre import Base
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 
 class Rol(Base):
     __tablename__ = "rol"
@@ -11,3 +12,4 @@ class Rol(Base):
     descripcion = Column(String(300), nullable=True)
     creado_en = Column(DateTime(timezone=True), server_default=func.now())
     actualizado_en = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    usuarios = relationship("Usuario", back_populates="rol")
