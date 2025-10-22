@@ -30,7 +30,7 @@ def _validate_password_complexity(v: str) -> str:
     return v    
 
 class UsuarioCreate(UsuarioBase):
-    contrasena: str = Field(..., min_length=8, max_length=100)
+    contrasena: str = Field(..., min_length=8, max_length=255)
     
     @field_validator("contrasena")
     @classmethod
@@ -58,8 +58,8 @@ class UsuarioUpdatePerfil(BaseModel):
     fecha_nacimiento: Optional[date] = None
     
 class UsuarioUpdateContrasena(BaseModel):
-    contrasena_actual: str = Field(..., min_length=8, max_length=100)
-    contrasena_nueva: str = Field(..., min_length=8, max_length=100)
+    contrasena_actual: str = Field(..., min_length=8, max_length=255)
+    contrasena_nueva: str = Field(..., min_length=8, max_length=255)
     @field_validator("contrasena_nueva")
     @classmethod
     def password_complexity(cls, v: str) -> str:
@@ -67,7 +67,7 @@ class UsuarioUpdateContrasena(BaseModel):
     
 class UsuarioLogin(BaseModel):
     correo: EmailStr = Field(..., max_length=100)
-    contrasena: str = Field(..., min_length=8, max_length=100)
+    contrasena: str = Field(..., min_length=8, max_length=255)
 
 class UsuarioResetearContrasena(BaseModel):
     correo: EmailStr = Field(..., max_length=100)
@@ -75,7 +75,7 @@ class UsuarioResetearContrasena(BaseModel):
 class UsuarioVerificarToken(BaseModel):
     correo: EmailStr = Field(..., max_length=100)
     token: str = Field(..., max_length=100)
-    contrasena_nueva: str = Field(..., min_length=8, max_length=100)
+    contrasena_nueva: str = Field(..., min_length=8, max_length=255)
 
     @field_validator("contrasena_nueva")
     @classmethod

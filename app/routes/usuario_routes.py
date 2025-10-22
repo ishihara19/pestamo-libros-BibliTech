@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
-from datetime import datetime
 
 from ..core.db.postgre import get_session
 from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse

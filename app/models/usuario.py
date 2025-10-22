@@ -15,7 +15,7 @@ class Usuario(Base):
     nombre = Column(String(50), nullable=False)
     apellido = Column(String(50), nullable=False)
     documento = Column(String(30), unique=True, nullable=False)
-    contrasena = Column(String(100), nullable=False)
+    contrasena = Column(String(255), nullable=False)
     tipo_documento_id = Column(Integer, ForeignKey("tipo_documento.id"), nullable=False)
     estado_id = Column(Integer, ForeignKey("estado.id"), nullable=False, server_default="2")
     rol_id = Column(Integer, ForeignKey("rol.id"), nullable=False)
