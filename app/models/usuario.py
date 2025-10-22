@@ -11,10 +11,10 @@ class Usuario(Base):
     __tablename__ = "usuario"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True, index=True)
-    correo = Column(String(50), unique=True, nullable=False)
+    correo = Column(String(100), unique=True, nullable=False)
     nombre = Column(String(50), nullable=False)
-    apellido = Column(String(100), nullable=False)
-    documento = Column(String(20), unique=True, nullable=False)
+    apellido = Column(String(50), nullable=False)
+    documento = Column(String(30), unique=True, nullable=False)
     contrasena = Column(String(100), nullable=False)
     tipo_documento_id = Column(Integer, ForeignKey("tipo_documento.id"), nullable=False)
     estado_id = Column(Integer, ForeignKey("estado.id"), nullable=False, server_default="2")

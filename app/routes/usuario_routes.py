@@ -84,7 +84,7 @@ async def verificar_token_usuario(
     verificacion: UsuarioVerificarToken,
     db: AsyncSession = Depends(get_session)
 ):
-    """Verificar el token  y restablecer la contraseña"""
+    """Verificar el token y restablecer la contraseña"""
     return await UsuarioService.verificar_token_usuario(verificacion, db)
 
 @usuario_router.delete("/{id}", status_code=204)

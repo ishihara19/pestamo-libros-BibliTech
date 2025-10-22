@@ -6,10 +6,10 @@ import re
 
 
 class UsuarioBase(BaseModel):
-    correo: EmailStr = Field(..., max_length=50)
-    nombre: str = Field(..., max_length=100)
-    apellido: str = Field(..., max_length=100)
-    documento: str = Field(..., max_length=20)
+    correo: EmailStr = Field(..., max_length=100)
+    nombre: str = Field(..., max_length=50)
+    apellido: str = Field(..., max_length=50)
+    documento: str = Field(..., max_length=30)
     tipo_documento_id: int
     estado_id: int
     rol_id: int
@@ -66,14 +66,14 @@ class UsuarioUpdateContrasena(BaseModel):
         return _validate_password_complexity(v)
     
 class UsuarioLogin(BaseModel):
-    correo: EmailStr = Field(..., max_length=50)
+    correo: EmailStr = Field(..., max_length=100)
     contrasena: str = Field(..., min_length=8, max_length=100)
 
 class UsuarioResetearContrasena(BaseModel):
-    correo: EmailStr = Field(..., max_length=50)
+    correo: EmailStr = Field(..., max_length=100)
 
 class UsuarioVerificarToken(BaseModel):
-    correo: EmailStr = Field(..., max_length=50)
+    correo: EmailStr = Field(..., max_length=100)
     token: str = Field(..., max_length=100)
     contrasena_nueva: str = Field(..., min_length=8, max_length=100)
 
