@@ -51,7 +51,7 @@ async def obtener_usuario(
     usuario = await UsuarioService.obtener_usuario(id, db)
     if not usuario:       
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return UsuarioView.model_validate(usuario)
+    return usuario
 
 @usuario_router.put("/{id}/perfil", response_model=UsuarioView)
 async def actualizar_perfil_usuario(

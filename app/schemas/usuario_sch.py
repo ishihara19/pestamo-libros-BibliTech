@@ -16,25 +16,26 @@ class UsuarioBase(BaseModel):
     telefono: Optional[str] = Field(None, max_length=10)
     direccion: Optional[str] = Field(None, max_length=200)
     fecha_nacimiento: Optional[date] = None
+    
+def _validate_password_complexity(v: str) -> str:
+    """Valida la complejidad de la contraseña."""
+    if not re.search(r"[a-z]", v):
+        raise ValueError("La contraseña debe contener al menos una letra minúscula")
+    if not re.search(r"[A-Z]", v):
+        raise ValueError("La contraseña debe contener al menos una letra mayúscula")
+    if not re.search(r"[0-9]", v):
+        raise ValueError("La contraseña debe contener al menos un número")
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
+        raise ValueError("La contraseña debe contener al menos un carácter especial")
+    return v    
 
 class UsuarioCreate(UsuarioBase):
     contrasena: str = Field(..., min_length=8, max_length=100)
-
+    
     @field_validator("contrasena")
     @classmethod
     def password_complexity(cls, v: str) -> str:
-        """Valida la complejidad de la contraseña."""
-        if not re.search(r"[a-z]", v):
-            raise ValueError("La contraseña debe contener al menos una letra minúscula")
-        if not re.search(r"[A-Z]", v):
-            raise ValueError("La contraseña debe contener al menos una letra mayúscula")
-        if not re.search(r"[0-9]", v):
-            raise ValueError("La contraseña debe contener al menos un número")
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-            raise ValueError(
-                "La contraseña debe contener al menos un carácter especial"
-            )
-        return v    
+        return _validate_password_complexity(v)   
 
 class UsuarioUpdateAdmin(BaseModel):
     correo: Optional[EmailStr] = None
@@ -62,18 +63,8 @@ class UsuarioUpdateContrasena(BaseModel):
     @field_validator("contrasena_nueva")
     @classmethod
     def password_complexity(cls, v: str) -> str:
-        """Valida la complejidad de la contraseña."""
-        if not re.search(r"[a-z]", v):
-            raise ValueError("La contraseña debe contener al menos una letra minúscula")
-        if not re.search(r"[A-Z]", v):
-            raise ValueError("La contraseña debe contener al menos una letra mayúscula")
-        if not re.search(r"[0-9]", v):
-            raise ValueError("La contraseña debe contener al menos un número")
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-            raise ValueError(
-                "La contraseña debe contener al menos un carácter especial"
-            )
-        return v
+        return _validate_password_complexity(v)
+    
 class UsuarioLogin(BaseModel):
     correo: EmailStr = Field(..., max_length=50)
     contrasena: str = Field(..., min_length=8, max_length=100)
@@ -85,6 +76,11 @@ class UsuarioVerificarToken(BaseModel):
     correo: EmailStr = Field(..., max_length=50)
     token: str = Field(..., max_length=100)
     contrasena_nueva: str = Field(..., min_length=8, max_length=100)
+
+    @field_validator("contrasena_nueva")
+    @classmethod
+    def password_complexity(cls, v: str) -> str:
+        return _validate_password_complexity(v)
 
 class UsuarioCambiarEstadoAdmin(BaseModel):
     estado_id: int

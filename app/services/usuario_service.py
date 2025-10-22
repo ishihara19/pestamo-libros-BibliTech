@@ -112,9 +112,9 @@ class UsuarioService:
         usuario = result.scalar()
         if not usuario:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        # Aquí se podría generar un token y enviarlo por correo
+        
         token = generar_token()
-        usuario.token = token  # Suponiendo que el modelo Usuario tiene un campo 'token'
+        usuario.token = token 
         await db.commit()
         
         await enviar_correo_restablecimiento(usuario.correo, token)
