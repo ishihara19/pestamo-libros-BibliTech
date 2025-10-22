@@ -54,7 +54,7 @@ async def authenticate_user(email: str, password: str, request: Request):
         )
         user = result.scalars().first()
 
-    if not user or not verify_password(password, user.hashed_password):
+    if not user or not verify_password(password, user.contrasena):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
     return str(user.id)

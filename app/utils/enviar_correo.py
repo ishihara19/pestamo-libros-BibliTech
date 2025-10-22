@@ -1,5 +1,5 @@
 from fastapi_mail import FastMail, MessageSchema
-from..core.email_config import conf
+from ..core.email_config import conf
 
 
 async def enviar_correo_restablecimiento(correo: str, token: str):
