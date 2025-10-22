@@ -147,7 +147,7 @@ class UsuarioService:
         return UsuarioMensaje(message="Contraseña restablecida exitosamente")
 
     @staticmethod
-    async def eliminar_usuario(id: int, db: AsyncSession) -> None:
+    async def eliminar_usuario(id: int, db: AsyncSession) -> UsuarioMensaje:
         """Eliminar un usuario por su ID."""
         result = await db.execute(select(Usuario).where(Usuario.id == id))
         usuario = result.scalar()
@@ -157,4 +157,6 @@ class UsuarioService:
         
         await db.delete(usuario)
         await db.commit()
+        
+        return UsuarioMensaje(message="Usuario eliminado exitosamente")
         

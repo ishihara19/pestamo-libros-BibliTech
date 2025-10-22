@@ -10,6 +10,7 @@ from ..models.usuario import Usuario
 from ..core.db.postgre import get_session
 from ..core.config import settings
 from ..utils.tiempo_tz import get_time_now
+from ..utils.utils import normalizar_correo
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -47,7 +48,7 @@ async def authenticate_user(email: str, password: str, request: Request):
         str: The user's ID if authentication is successful, None otherwise.
     """
     
-    email = email.strip().lower()
+    email = normalizar_correo(email)
     async with get_session(request) as db:
         result = await db.execute(
             select(Usuario).where(Usuario.correo == email)

@@ -1,8 +1,10 @@
 from pydantic import BaseModel, ConfigDict, Field, field_validator, EmailStr
 from datetime import date, datetime
 from typing import Optional
-from ..utils.tiempo_tz import to_localtime
 import re
+
+from ..utils.tiempo_tz import to_localtime
+from ..utils.utils import normalizar_correo
 
 
 class UsuarioBase(BaseModel):
@@ -17,6 +19,12 @@ class UsuarioBase(BaseModel):
     direccion: Optional[str] = Field(None, max_length=200)
     fecha_nacimiento: Optional[date] = None
     
+    @field_validator("correo")
+    @classmethod
+    def validar_y_normalizar_correo(cls, v: str) -> str:
+        """Aplica normalización al correo electrónico."""
+        return normalizar_correo(v)
+    
 def _validate_password_complexity(v: str) -> str:
     """Valida la complejidad de la contraseña."""
     if not re.search(r"[a-z]", v):
@@ -27,7 +35,9 @@ def _validate_password_complexity(v: str) -> str:
         raise ValueError("La contraseña debe contener al menos un número")
     if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
         raise ValueError("La contraseña debe contener al menos un carácter especial")
-    return v    
+    return v  
+
+  
 
 class UsuarioCreate(UsuarioBase):
     contrasena: str = Field(..., min_length=8, max_length=255)
@@ -49,6 +59,12 @@ class UsuarioUpdateAdmin(BaseModel):
     telefono: Optional[str] = None
     direccion: Optional[str] = None
     fecha_nacimiento: Optional[date] = None
+    
+    @field_validator("correo")
+    @classmethod
+    def validar_y_normalizar_correo(cls, v: str) -> str:
+        """Aplica normalización al correo electrónico."""
+        return normalizar_correo(v)
 
 class UsuarioUpdatePerfil(BaseModel):    
     nombre: Optional[str] = None
@@ -68,14 +84,32 @@ class UsuarioUpdateContrasena(BaseModel):
 class UsuarioLogin(BaseModel):
     correo: EmailStr = Field(..., max_length=100)
     contrasena: str = Field(..., min_length=8, max_length=255)
+    
+    @field_validator("correo")
+    @classmethod
+    def validar_y_normalizar_correo(cls, v: str) -> str:
+        """Aplica normalización al correo electrónico."""
+        return normalizar_correo(v)
+    
 
 class UsuarioResetearContrasena(BaseModel):
     correo: EmailStr = Field(..., max_length=100)
+    @field_validator("correo")
+    @classmethod
+    def validar_y_normalizar_correo(cls, v: str) -> str:
+        """Aplica normalización al correo electrónico."""
+        return normalizar_correo(v)
 
 class UsuarioVerificarToken(BaseModel):
     correo: EmailStr = Field(..., max_length=100)
     token: str = Field(..., max_length=100)
     contrasena_nueva: str = Field(..., min_length=8, max_length=255)
+    
+    @field_validator("correo")
+    @classmethod
+    def validar_y_normalizar_correo(cls, v: str) -> str:
+        """Aplica normalización al correo electrónico."""
+        return normalizar_correo(v)
 
     @field_validator("contrasena_nueva")
     @classmethod

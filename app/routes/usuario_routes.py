@@ -92,4 +92,4 @@ async def eliminar_usuario(
     db: AsyncSession = Depends(get_session)
 ):
     """Eliminar un usuario existente"""
-    await UsuarioService.eliminar_usuario(id, db)
+    return await UsuarioService.eliminar_usuario(id, db)
