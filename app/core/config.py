@@ -36,7 +36,7 @@ class Settings:
     MAIL_PORT = int(os.getenv("MAIL_PORT", 587))
     MAIL_SERVER = os.getenv("MAIL_SERVER")
 
-    ROL_ADMIN = os.getenv("ROL_ADMIN", 2)
+    ROL_ADMIN = int(os.getenv("ROL_ADMIN", 2))
     ESTADO_ACTIVO = int(os.getenv("ESTADO_ACTIVO", 1))
 
 
