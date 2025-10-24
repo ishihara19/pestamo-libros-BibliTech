@@ -18,6 +18,6 @@ def validar_complejidad_contrasena(v: str) -> str:
         raise ValueError("La contraseña debe contener al menos una letra mayúscula")
     if not re.search(r"[0-9]", v):
         raise ValueError("La contraseña debe contener al menos un número")
-    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-        raise ValueError("La contraseña debe contener al menos un carácter especial")
+    if not re.search(r'[!@#$%^&*.,-:()_]', v):
+        raise ValueError("La contraseña debe contener al menos un carácter especial de !@#$%^&*.,-:()_")
     return v  
