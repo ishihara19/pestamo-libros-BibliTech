@@ -16,7 +16,7 @@ from ..core.config import settings
 from ..schemas.usuario_sch import UsuarioReadNormalized, UsuarioCreate,UsuarioView
 from ..services.usuario_service import UsuarioService
 from ..dependencies.auth import obtener_usuario_actual_activo
-from ..models.usuario   import  Usuario
+from ..models.usuario import Usuario
 
 
 auth = APIRouter(prefix="/auth", tags=["auth"])
