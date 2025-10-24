@@ -5,6 +5,8 @@ from ..schemas.estado_sch import EstadoCreate, EstadoUpdate, EstadoView
 from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
 from ..services.estado_service import EstadoService
 from ..core.db.postgre import get_session
+from ..dependencies.auth import obtener_usuario_actual_administrador, obtener_usuario_actual_activo
+from ..models.usuario import Usuario
 
 estado_router = APIRouter(prefix="/estados", tags=["Estados"])
 
@@ -12,7 +14,8 @@ estado_router = APIRouter(prefix="/estados", tags=["Estados"])
 @estado_router.post("", response_model=EstadoView, status_code=201)
 async def crear_estado(
     estado: EstadoCreate,
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
 ):
     """Crear un nuevo estado"""
     return await EstadoService.create_estado(estado, db)
@@ -57,7 +60,8 @@ async def listar_estados_por_tipo(
 @estado_router.get("/{id}", response_model=EstadoView)
 async def obtener_estado(
     id: int,
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    usuario_actual: Usuario = Depends(obtener_usuario_actual_activo)
 ):
     """Obtener un estado por ID"""
     return await EstadoService.obtener_estado_id(id, db)
@@ -67,7 +71,8 @@ async def obtener_estado(
 async def actualizar_estado(
     id: int,
     estado_update: EstadoUpdate,
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
 ):
     """Actualizar un estado existente"""
     return await EstadoService.actualizar_estado(id, estado_update, db)
@@ -76,7 +81,8 @@ async def actualizar_estado(
 @estado_router.delete("/{id}", status_code=204)
 async def eliminar_estado(
     id: int,
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
 ):
     """Eliminar un estado"""
     await EstadoService.eliminar_estado(id, db)

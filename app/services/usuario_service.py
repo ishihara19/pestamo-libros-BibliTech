@@ -2,10 +2,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from fastapi import HTTPException
 from datetime import datetime, timedelta, timezone
+from sqlalchemy.orm import selectinload
 
 from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
 from ..models.usuario import Usuario
-from ..schemas.usuario_sch import UsuarioCreate, UsuarioUpdatePerfil, UsuarioView, UsuarioUpdateContrasena, UsuarioResetearContrasena, UsuarioVerificarToken, UsuarioMensaje
+from ..schemas.usuario_sch import UsuarioCreate, UsuarioUpdatePerfil, UsuarioView, UsuarioUpdateContrasena, UsuarioResetearContrasena, UsuarioVerificarToken, UsuarioMensaje, UsuarioReadNormalized
 from ..core.security import hash_password, verify_password
 from ..utils.generar_token import generar_token
 from ..utils.enviar_correo import enviar_correo_restablecimiento
@@ -26,7 +27,8 @@ class UsuarioService:
     @staticmethod
     async def listar_usuarios(
         db: AsyncSession, 
-        pagination: PaginationParams | None = None
+        pagination: PaginationParams | None = None,
+        normalizado: bool = False
     ) -> list[UsuarioView] | PaginatedResponse[UsuarioView]:
         """
         Listar todos los usuarios en la base de datos.
@@ -38,19 +40,42 @@ class UsuarioService:
             total_result = await db.execute(count_query)
             total = total_result.scalar()
             
-            # Obtener registros paginados
+            if normalizado:
+                # Obtener registros paginados
+                query = (
+                    select(Usuario).options(
+                selectinload(Usuario.rol),
+                selectinload(Usuario.estado),
+                selectinload(Usuario.tipo_documento),)
+                    .offset(pagination.offset)
+                    .limit(pagination.limit)
+                    )                
+        
+                result = await db.execute(query)
+                usuarios = result.scalars().all()
+            
+                items = [UsuarioReadNormalized.from_model(usuario) for usuario in usuarios]
+                return PaginatedResponse.create(items, total, pagination)
+                
             query = (
                 select(Usuario)
                 .offset(pagination.offset)
                 .limit(pagination.limit)
-            )
+            ) 
             result = await db.execute(query)
-            usuarios = result.scalars().all()
-            
+            usuarios = result.scalars().all()   
             items = [UsuarioView.model_validate(usuario) for usuario in usuarios]
             return PaginatedResponse.create(items, total, pagination)
         
         # Sin paginación (comportamiento original)
+        if normalizado:
+            result = await db.execute(select(Usuario).options(
+                selectinload(Usuario.rol),
+                selectinload(Usuario.estado),
+                selectinload(Usuario.tipo_documento),)
+            )
+            usuarios = result.scalars().all()
+            return [UsuarioReadNormalized.from_model(usuario) for usuario in usuarios]
         result = await db.execute(select(Usuario))
         usuarios = result.scalars().all()
         return [UsuarioView.model_validate(usuario) for usuario in usuarios]
@@ -111,6 +136,7 @@ class UsuarioService:
         """Restablecer la contraseña de un usuario."""
         result = await db.execute(select(Usuario).where(Usuario.correo == contrasena_resetear.correo))
         usuario = result.scalar()
+        
         if not usuario:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         
