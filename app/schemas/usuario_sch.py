@@ -123,6 +123,40 @@ class UsuarioView(UsuarioBase):
         instance.actualizado_en = to_localtime(instance.actualizado_en)
         return instance   
 
+class UsuarioReadNormalized(BaseModel):
+    id: int
+    correo: str
+    nombre: str
+    apellido: str
+    documento: str
+    tipo_documento: str
+    rol: str
+    estado: str
+    telefono: str | None
+    direccion: str | None
+    fecha_nacimiento: date | None
+    creado_en: datetime
+    actualizado_en: datetime | None
+    
+    model_config = ConfigDict(from_attributes=True)
+    @classmethod
+    def from_model(cls, usuario):
+        return cls(
+            id=usuario.id,
+            correo=usuario.correo,
+            nombre=usuario.nombre,
+            apellido=usuario.apellido,
+            documento=usuario.documento,
+            tipo_documento=usuario.tipo_documento.acronimo if usuario.tipo_documento else None,
+            rol=usuario.rol.acronimo if usuario.rol else None,
+            estado=usuario.estado.nombre if usuario.estado else None,
+            telefono=usuario.telefono,
+            direccion=usuario.direccion,
+            fecha_nacimiento=usuario.fecha_nacimiento,
+            creado_en=usuario.creado_en,
+            actualizado_en=usuario.actualizado_en,
+        )  
+
 class UsuarioMensaje(BaseModel):
     message: str   
     
