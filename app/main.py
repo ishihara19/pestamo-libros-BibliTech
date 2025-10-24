@@ -20,7 +20,8 @@ async def lifespan(app: FastAPI):
     yield
     print("Servidor cerrando...")
 
-app = FastAPI(lifespan=lifespan,title="API BibliTech", description="API RESTful para la gestión de prestamo de libros", version="0.0.1")
+app = FastAPI(lifespan=lifespan,title="API BibliTech", description="API RESTful para la gestión de prestamo de libros", version="1.0.1")
+
 app.include_router(estado_router, prefix=settings.PREFIX_API_VERSION)
 app.include_router(tipo_documento_router, prefix=settings.PREFIX_API_VERSION)
 app.include_router(rol_router, prefix=settings.PREFIX_API_VERSION)
