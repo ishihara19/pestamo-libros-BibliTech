@@ -15,7 +15,7 @@ from ..schemas.usuario_sch import (
     UsuarioReadNormalized,
 )
 from ..services.usuario_service import UsuarioService
-from ..dependencies.auth import obterner_usuario_actual_administrador, obterner_usuario_actual_activo
+from ..dependencies.auth import obtener_usuario_actual_administrador, obtener_usuario_actual_activo
 from ..models.usuario import Usuario
 
 usuario_router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
@@ -34,7 +34,7 @@ async def listar_usuarios(
     db: AsyncSession = Depends(get_session),
     page: int | None = Query(None, ge=1, description="Número de página"),
     page_size: int | None = Query(None, ge=1, le=100, description="Items por página"),
-    usuario_admin: Usuario = Depends(obterner_usuario_actual_administrador)
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
 ):
     """
     Listar todos los usuarios.
@@ -50,7 +50,7 @@ async def listar_usuarios(
 async def obtener_usuario(
     id: int,
     db: AsyncSession = Depends(get_session),
-    usuario_actual: Usuario = Depends(obterner_usuario_actual_activo)
+    usuario_actual: Usuario = Depends(obtener_usuario_actual_activo)
 ):
     """Obtener un usuario por su ID"""
     usuario = await UsuarioService.obtener_usuario(id, db)
@@ -63,7 +63,7 @@ async def actualizar_perfil_usuario(
     id: int,
     usuario_update: UsuarioUpdatePerfil,
     db: AsyncSession = Depends(get_session),
-    usuario_actual: Usuario = Depends(obterner_usuario_actual_activo)
+    usuario_actual: Usuario = Depends(obtener_usuario_actual_activo)
 ):
     """Actualizar el perfil de un usuario existente"""
     return await UsuarioService.actualizar_perfil_usuario(id, usuario_update, db)
@@ -73,7 +73,7 @@ async def actualizar_contrasena_usuario(
     id: int,
     contrasena_update: UsuarioUpdateContrasena,
     db: AsyncSession = Depends(get_session),
-    usuario_actual: Usuario = Depends(obterner_usuario_actual_activo)
+    usuario_actual: Usuario = Depends(obtener_usuario_actual_activo)
 ):
     """Actualizar la contraseña de un usuario existente"""
     return await UsuarioService.actualizar_contrasena_usuario(id, contrasena_update, db)
@@ -98,7 +98,7 @@ async def verificar_token_usuario(
 async def eliminar_usuario(
     id: int,
     db: AsyncSession = Depends(get_session),
-    usuario_admin: Usuario = Depends(obterner_usuario_actual_administrador)
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
 ):
     """Eliminar un usuario existente"""
     return await UsuarioService.eliminar_usuario(id, db)

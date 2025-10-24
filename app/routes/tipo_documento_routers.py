@@ -6,7 +6,7 @@ from ..schemas.tipo_documento_sch import TipoDocumentoCreate, TipoDocumentoView,
 from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
 from ..services.tipo_documento_service import TipoDocumentoService
 from ..core.db.postgre import get_session
-from ..dependencies.auth import obterner_usuario_actual_administrador, obterner_usuario_actual_activo
+from ..dependencies.auth import obtener_usuario_actual_administrador, obtener_usuario_actual_activo
 from ..models.usuario import Usuario
 
 tipo_documento_router = APIRouter(prefix="/tipos-documento", tags=["Tipos de Documento"])
@@ -15,7 +15,7 @@ tipo_documento_router = APIRouter(prefix="/tipos-documento", tags=["Tipos de Doc
 async def crear_tipo_documento(
     tipo_documento: TipoDocumentoCreate,
     db: AsyncSession = Depends(get_session),
-    usuario_admin: Usuario = Depends(obterner_usuario_actual_administrador)
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
 ):
     """Crear un nuevo tipo de documento"""
     return await TipoDocumentoService.create_tipo_documento(tipo_documento, db)
@@ -40,7 +40,7 @@ async def listar_tipos_documento(
 async def obtener_tipo_documento(
     id: int,
     db: AsyncSession = Depends(get_session),
-    usuario_actual: Usuario = Depends(obterner_usuario_actual_activo)
+    usuario_actual: Usuario = Depends(obtener_usuario_actual_activo)
 ):
     """Obtener un tipo de documento por su ID"""
     tipo_documento =  await TipoDocumentoService.obtener_tipo_documento(id, db)
@@ -53,7 +53,7 @@ async def actualizar_tipo_documento(
     id: int,
     tipo_documento_update: TipoDocumentoUpdate,
     db: AsyncSession = Depends(get_session),
-    usuario_admin: Usuario = Depends(obterner_usuario_actual_administrador)
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
 ):
     """Actualizar un tipo de documento existente"""
     return await TipoDocumentoService.actualizar_tipo_documento(id, tipo_documento_update, db)
@@ -62,7 +62,7 @@ async def actualizar_tipo_documento(
 async def eliminar_tipo_documento(
     id: int,
     db: AsyncSession = Depends(get_session),
-    usuario_admin: Usuario = Depends(obterner_usuario_actual_administrador)
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
 ):
     """Eliminar un tipo de documento por su ID"""
     await TipoDocumentoService.eliminar_tipo_documento(id, db)

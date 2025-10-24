@@ -15,7 +15,7 @@ from ..schemas.jwt_sch import Token, TokenRefreshRequest, RefreshTokenResponse, 
 from ..core.config import settings
 from ..schemas.usuario_sch import UsuarioReadNormalized, UsuarioCreate,UsuarioView
 from ..services.usuario_service import UsuarioService
-from ..dependencies.auth import obterner_usuario_actual_activo
+from ..dependencies.auth import obtener_usuario_actual_activo
 from ..models.usuario   import  Usuario
 
 
@@ -49,6 +49,6 @@ async def iniciar_sesion(
 
 @auth.get("/yo", response_model=UsuarioReadNormalized)
 async def obtener_yo(
-    usuario_actual: Usuario = Depends(obterner_usuario_actual_activo)
+    usuario_actual: Usuario = Depends(obtener_usuario_actual_activo)
 ):
     return UsuarioReadNormalized.from_model(usuario_actual)

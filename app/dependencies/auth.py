@@ -13,7 +13,7 @@ from ..schemas.usuario_sch import UsuarioView, UsuarioReadNormalized
 
 oauth2_schema = OAuth2PasswordBearer(tokenUrl=f"{settings.PREFIX_API_VERSION}/auth/inicio-sesion")
 
-async def obterner_usuario_actual(token: str = Depends(oauth2_schema), db: AsyncSession = Depends(get_session)) -> Usuario:
+async def obtener_usuario_actual(token: str = Depends(oauth2_schema), db: AsyncSession = Depends(get_session)) -> Usuario:
     """
     Get the current user from the JWT token.
     """
@@ -33,8 +33,8 @@ async def obterner_usuario_actual(token: str = Depends(oauth2_schema), db: Async
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="token inválido")
     
-async def obterner_usuario_actual_activo(
-    usuario_actual: Annotated[Usuario, Depends(obterner_usuario_actual),]
+async def obtener_usuario_actual_activo(
+    usuario_actual: Annotated[Usuario, Depends(obtener_usuario_actual),]
 ):
     if usuario_actual.estado_id != 1:
         raise HTTPException(
@@ -44,8 +44,8 @@ async def obterner_usuario_actual_activo(
     return usuario_actual
 
 
-async def obterner_usuario_actual_administrador(
-    usuario_actual: Annotated[Usuario, Depends(obterner_usuario_actual_activo),]
+async def obtener_usuario_actual_administrador(
+    usuario_actual: Annotated[Usuario, Depends(obtener_usuario_actual_activo),]
 ):
     if usuario_actual.rol_id != 2:
         raise HTTPException(
