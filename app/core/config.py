@@ -37,7 +37,7 @@ class Settings:
     MAIL_SERVER = os.getenv("MAIL_SERVER")
 
     ROL_ADMIN = os.getenv("ROL_ADMIN", 2)
-    ESTADO_ACTIVO = os.getenv("ESTADO_ACTIVO", 1)
+    ESTADO_ACTIVO = int(os.getenv("ESTADO_ACTIVO", 1))
 
 
 settings = Settings()
