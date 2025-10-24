@@ -6,13 +6,16 @@ from ..core.db.postgre import get_session
 from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
 from ..schemas.rol_sch import RolCreate, RolView, RolUpdate
 from ..services.rol_service import RolService
+from ..dependencies.auth import obterner_usuario_actual_superusuario, obterner_usuario_actual_activo
+from ..models.usuario import Usuario
 
 rol_router = APIRouter(prefix="/roles", tags=["Roles"])
 
 @rol_router.post("", response_model=RolView, status_code=201)
 async def crear_rol(
     rol: RolCreate,
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    usuario_admin: Usuario = Depends(obterner_usuario_actual_superusuario)
 ):
     """Crear un nuevo rol"""
     return await RolService.create_role(rol, db)
@@ -36,7 +39,8 @@ async def listar_roles(
 @rol_router.get("/{id}", response_model=RolView)
 async def obtener_rol(
     id: int,
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    usuario_actual: Usuario = Depends(obterner_usuario_actual_activo)
 ):
     """Obtener un rol por su ID"""
     rol = await RolService.obtener_role(id, db)
@@ -48,7 +52,8 @@ async def obtener_rol(
 async def actualizar_rol(
     id: int,
     rol_update: RolUpdate,
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    usuario_admin: Usuario = Depends(obterner_usuario_actual_superusuario)
 ):
     """Actualizar un rol existente"""
     return await RolService.actualizar_role(id, rol_update, db)
@@ -56,7 +61,8 @@ async def actualizar_rol(
 @rol_router.delete("/{id}", status_code=204)
 async def eliminar_rol(
     id: int,
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    usuario_admin: Usuario = Depends(obterner_usuario_actual_superusuario)
 ):
     """Eliminar un rol existente"""
     await RolService.eliminar_role(id, db)

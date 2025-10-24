@@ -11,9 +11,12 @@ from ..schemas.usuario_sch import (
     UsuarioUpdateContrasena,
     UsuarioResetearContrasena,
     UsuarioVerificarToken,
-    UsuarioMensaje
+    UsuarioMensaje,
+    UsuarioReadNormalized,
 )
 from ..services.usuario_service import UsuarioService
+from ..dependencies.auth import obterner_usuario_actual_superusuario, obterner_usuario_actual_activo
+from ..models.usuario import Usuario
 
 usuario_router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
@@ -25,11 +28,13 @@ async def crear_usuario(
     """Crear un nuevo usuario"""
     return await UsuarioService.create_usuario(usuario, db)
 
-@usuario_router.get("", response_model=list[UsuarioView] | PaginatedResponse[UsuarioView])
+@usuario_router.get("", response_model=list[UsuarioView] | PaginatedResponse[UsuarioView]|list[UsuarioReadNormalized]|PaginatedResponse[UsuarioReadNormalized])
 async def listar_usuarios(
+    normalizado: bool = Query(False, description="Retornar correos normalizados"),
     db: AsyncSession = Depends(get_session),
     page: int | None = Query(None, ge=1, description="Número de página"),
-    page_size: int | None = Query(None, ge=1, le=100, description="Items por página")
+    page_size: int | None = Query(None, ge=1, le=100, description="Items por página"),
+    usuario_admin: Usuario = Depends(obterner_usuario_actual_superusuario)
 ):
     """
     Listar todos los usuarios.
@@ -39,12 +44,13 @@ async def listar_usuarios(
     if page is not None and page_size is not None:
         pagination = PaginationParams(page=page, page_size=page_size)
     
-    return await UsuarioService.listar_usuarios(db, pagination)
+    return await UsuarioService.listar_usuarios(db, pagination, normalizado)
 
 @usuario_router.get("/{id}", response_model=UsuarioView)
 async def obtener_usuario(
     id: int,
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    usuario_actual: Usuario = Depends(obterner_usuario_actual_activo)
 ):
     """Obtener un usuario por su ID"""
     usuario = await UsuarioService.obtener_usuario(id, db)
@@ -56,7 +62,8 @@ async def obtener_usuario(
 async def actualizar_perfil_usuario(
     id: int,
     usuario_update: UsuarioUpdatePerfil,
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    usuario_actual: Usuario = Depends(obterner_usuario_actual_activo)
 ):
     """Actualizar el perfil de un usuario existente"""
     return await UsuarioService.actualizar_perfil_usuario(id, usuario_update, db)
@@ -65,7 +72,8 @@ async def actualizar_perfil_usuario(
 async def actualizar_contrasena_usuario(
     id: int,
     contrasena_update: UsuarioUpdateContrasena,
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    usuario_actual: Usuario = Depends(obterner_usuario_actual_activo)
 ):
     """Actualizar la contraseña de un usuario existente"""
     return await UsuarioService.actualizar_contrasena_usuario(id, contrasena_update, db)
@@ -89,7 +97,8 @@ async def verificar_token_usuario(
 @usuario_router.delete("/{id}", status_code=204)
 async def eliminar_usuario(
     id: int,
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    usuario_admin: Usuario = Depends(obterner_usuario_actual_superusuario)
 ):
     """Eliminar un usuario existente"""
     return await UsuarioService.eliminar_usuario(id, db)
