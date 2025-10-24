@@ -46,7 +46,7 @@ async def obterner_usuario_actual_activo(
     return usuario_actual
 
 
-async def obterner_usuario_actual_superusuario(
+async def obterner_usuario_actual_administrador(
     usuario_actual: Annotated[Usuario, Depends(obterner_usuario_actual_activo),]
 ):
     if usuario_actual.rol_id != 2:

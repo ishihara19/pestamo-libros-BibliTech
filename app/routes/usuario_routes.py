@@ -15,7 +15,7 @@ from ..schemas.usuario_sch import (
     UsuarioReadNormalized,
 )
 from ..services.usuario_service import UsuarioService
-from ..dependencies.auth import obterner_usuario_actual_superusuario, obterner_usuario_actual_activo
+from ..dependencies.auth import obterner_usuario_actual_administrador, obterner_usuario_actual_activo
 from ..models.usuario import Usuario
 
 usuario_router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
@@ -34,7 +34,7 @@ async def listar_usuarios(
     db: AsyncSession = Depends(get_session),
     page: int | None = Query(None, ge=1, description="Número de página"),
     page_size: int | None = Query(None, ge=1, le=100, description="Items por página"),
-    usuario_admin: Usuario = Depends(obterner_usuario_actual_superusuario)
+    usuario_admin: Usuario = Depends(obterner_usuario_actual_administrador)
 ):
     """
     Listar todos los usuarios.
@@ -98,7 +98,7 @@ async def verificar_token_usuario(
 async def eliminar_usuario(
     id: int,
     db: AsyncSession = Depends(get_session),
-    usuario_admin: Usuario = Depends(obterner_usuario_actual_superusuario)
+    usuario_admin: Usuario = Depends(obterner_usuario_actual_administrador)
 ):
     """Eliminar un usuario existente"""
     return await UsuarioService.eliminar_usuario(id, db)
