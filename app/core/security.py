@@ -6,7 +6,6 @@ from fastapi import Request
 from jose import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
 from ..models.usuario import Usuario
 from ..core.db.postgre import get_session
 from ..core.config import settings
@@ -48,14 +47,10 @@ async def authenticate_user(email: str, password: str, db: AsyncSession):
     Returns:
         str: El ID del usuario si la autenticación es exitosa, None en caso contrario.
     """
-    
     email = normalizar_correo(email)
-    print(email)
     result = await db.execute(select(Usuario).where(Usuario.correo == email))
-    print(result.scalars())
     user = result.scalars().first()
-    print(user)
-    print(password)
+    
     
     if not user or not verify_password(password, user.contrasena):
         raise HTTPException(status_code=401, detail="Invalid email or password")

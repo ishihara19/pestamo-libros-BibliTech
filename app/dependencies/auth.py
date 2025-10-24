@@ -19,8 +19,7 @@ async def obterner_usuario_actual(token: str = Depends(oauth2_schema), db: Async
     """
     try:
         payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
-        usuario_id = int(payload.get("sub"))
-        print(usuario_id)
+        usuario_id = int(payload.get("sub"))        
         if usuario_id is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="token inválido")
         usuario = await db.execute(select(Usuario).options(
@@ -37,7 +36,6 @@ async def obterner_usuario_actual(token: str = Depends(oauth2_schema), db: Async
 async def obterner_usuario_actual_activo(
     usuario_actual: Annotated[Usuario, Depends(obterner_usuario_actual),]
 ):
-    print(usuario_actual.estado_id)
     if usuario_actual.estado_id != 1:
         raise HTTPException(
             status_code = status.HTTP_400_BAD_REQUEST,

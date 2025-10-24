@@ -136,7 +136,7 @@ class UsuarioService:
         """Restablecer la contraseña de un usuario."""
         result = await db.execute(select(Usuario).where(Usuario.correo == contrasena_resetear.correo))
         usuario = result.scalar()
-        print(usuario)
+        
         if not usuario:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         
