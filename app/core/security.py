@@ -18,57 +18,59 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
     """
-    Hash a password using bcrypt.
+    Hash una contraseña usando bcrypt.
     Args:
-        password (str): The password to hash.
+        password (str): La contraseña a hashear.
     Returns:
-        str: The hashed password.
+        str: La contraseña hasheada.
     """
     return pwd_context.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
-    Verify a plain password against a hashed password.
+    Verifica una contraseña en texto plano contra una contraseña hash.
     Args:
-        plain_password (str): The plain password to verify.
-        hashed_password (str): The hashed password to compare against.
+        plain_password (str): La contraseña en texto plano a verificar.
+        hashed_password (str): La contraseña hash con la que comparar.
     Returns:
-        bool: True if the passwords match, False otherwise.
+        bool: True si las contraseñas coinciden, False de lo contrario.
     """
     return pwd_context.verify(plain_password, hashed_password)
 
 
 async def authenticate_user(email: str, password: str, db: AsyncSession):
     """
-    Authenticate a user by verifying their email and password.
+    Autentica a un usuario verificando su correo electrónico y contraseña.
     Args:
-        email (str): The user's email.
-        password (str): The user's password.
+        email (str): El correo electrónico del usuario.
+        password (str): La contraseña del usuario.
     Returns:
-        str: The user's ID if authentication is successful, None otherwise.
+        str: El ID del usuario si la autenticación es exitosa, None en caso contrario.
     """
     
     email = normalizar_correo(email)
-    result = await db.execute(
-        select(Usuario).where(Usuario.correo == email)
-    )
+    print(email)
+    result = await db.execute(select(Usuario).where(Usuario.correo == email))
+    print(result.scalars())
     user = result.scalars().first()
-
+    print(user)
+    print(password)
+    
     if not user or not verify_password(password, user.contrasena):
         raise HTTPException(status_code=401, detail="Invalid email or password")
-
+    
     return str(user.id)
 
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     """
-    Create a JWT access token.
+    Crea un JWT access token.
     Args:
-        data (dict): The data to encode in the token.
-        expires_delta (timedelta, optional): The expiration time for the token. Defaults to None.
+        data (dict): Los datos a codificar en el token.
+        expires_delta (timedelta, optional): El tiempo de expiración del token. Por defecto es None.
     Returns:
-        str: The encoded JWT access token.
+        str: El JWT access token codificado.
     """
     to_encode = data.copy()
     if expires_delta:
@@ -87,9 +89,9 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
 
 def create_refresh_token(data: dict, expires_delta: timedelta = None):
     """
-    Create a JWT refresh token.
+    Crea un JWT refresh token.
     Args:
-        data (dict): The data to encode in the token.
+        data (dict): Los datos a codificar en el token.
     """
     to_encode = data.copy()
     if expires_delta:
