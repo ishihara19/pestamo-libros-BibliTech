@@ -13,9 +13,10 @@ from ..schemas.usuario_sch import UsuarioView, UsuarioReadNormalized
 
 oauth2_schema = OAuth2PasswordBearer(tokenUrl=f"{settings.PREFIX_API_VERSION}/auth/inicio-sesion")
 
+
 async def obtener_usuario_actual(token: str = Depends(oauth2_schema), db: AsyncSession = Depends(get_session)) -> Usuario:
     """
-    Get the current user from the JWT token.
+    Obtener el usuario actual del token JWT.
     """
     try:
         payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
@@ -36,7 +37,7 @@ async def obtener_usuario_actual(token: str = Depends(oauth2_schema), db: AsyncS
 async def obtener_usuario_actual_activo(
     usuario_actual: Annotated[Usuario, Depends(obtener_usuario_actual),]
 ):
-    if usuario_actual.estado_id != 1:
+    if usuario_actual.estado_id != settings.ESTADO_ACTIVO:
         raise HTTPException(
             status_code = status.HTTP_400_BAD_REQUEST,
             detail= "Usuario inactivo"
@@ -47,7 +48,7 @@ async def obtener_usuario_actual_activo(
 async def obtener_usuario_actual_administrador(
     usuario_actual: Annotated[Usuario, Depends(obtener_usuario_actual_activo),]
 ):
-    if usuario_actual.rol_id != 2:
+    if usuario_actual.rol_id != settings.ROL_ADMIN:
         raise HTTPException(
             status_code = status.HTTP_401_UNAUTHORIZED,
             detail= "Sin autorización"
