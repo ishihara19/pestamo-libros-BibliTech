@@ -85,7 +85,7 @@ def calcular_edad(fecha_nacimiento: date) -> int:
     )
 
 
-def tiene_edad_minima(fecha_nacimiento: date, edad_minima: int = 9) -> bool:
+def tiene_edad_minima(fecha_nacimiento: date, edad_minima: int) -> bool:
     """Verifica si la fecha de nacimiento indica que la persona tiene al menos la edad mínima."""
     if not fecha_nacimiento:
         return False
