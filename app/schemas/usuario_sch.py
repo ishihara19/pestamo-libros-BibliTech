@@ -128,8 +128,8 @@ class UsuarioUpdatePerfil(BaseModel):
     @field_validator("fecha_nacimiento")
     @classmethod
     def validar_fecha_nacimiento(cls, v: date) -> date:
-        if not tiene_edad_minima(v, 9):
-            raise ValueError("El usuario debe tener al menos 9 años.")
+        if not tiene_edad_minima(v, settings.EDAD_MINIMA_USUARIO):
+            raise ValueError(f"El usuario debe tener al menos {settings.EDAD_MINIMA_USUARIO} años.")
         return v
 
 
