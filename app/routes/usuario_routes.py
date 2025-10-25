@@ -71,7 +71,7 @@ async def obtener_usuario(
     return usuario
 
 
-@usuario_router.put("/{id}/perfil", response_model=UsuarioView)
+@usuario_router.put("/{id}/perfil", response_model=UsuarioReadNormalized)
 async def actualizar_perfil_usuario(
     id: int,
     usuario_update: UsuarioUpdatePerfil,

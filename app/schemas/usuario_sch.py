@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field, field_validator, EmailStr
+from pydantic import BaseModel, ConfigDict, Field, field_validator, EmailStr,ValidationInfo
 from datetime import date, datetime
 from typing import Optional
 import re
@@ -44,16 +44,16 @@ class UsuarioCreate(BaseModel):
 
     @field_validator("fecha_nacimiento")
     @classmethod
-    def validar_fecha_nacimiento(cls, v: date, values: dict) -> date:
+    def validar_fecha_nacimiento(cls, v: date, info: ValidationInfo) -> date:
         """Valida edad mínima y coherencia con tipo_documento_id si está presente."""
         if not tiene_edad_minima(v, 9):
             raise ValueError("El usuario debe tener al menos 9 años.")
-        tipo_documento = values.get("tipo_documento_id")
+        
+        tipo_documento = info.data.get("tipo_documento_id")
         if tipo_documento:
-            # validar_tipo_documento_edad lanza ValueError si hay inconsistencia
             validar_tipo_documento_edad(tipo_documento, v)
+        
         return v
-
     @field_validator("correo")
     @classmethod
     def validar_y_normalizar_correo(cls, v: str) -> str:
@@ -159,7 +159,7 @@ class UsuarioVerificarToken(BaseModel):
 
     @field_validator("correo")
     @classmethod
-    def validar_y_normalizar_correo(cls, v: date) -> date:
+    def validar_y_normalizar_correo(cls, v: str) -> str:
         """Aplica normalización al correo electrónico."""
         return normalizar_correo(v)
 
