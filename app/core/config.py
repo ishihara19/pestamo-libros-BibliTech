@@ -50,6 +50,7 @@ class Settings:
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES = int(
         os.getenv("PASSWORD_RESET_TOKEN_EXPIRE_MINUTES", 10)
     )
+    EDAD_MINIMA_USUARIO = int(os.getenv("EDAD_MINIMA_USUARIO", 9))
 
 
 settings = Settings()

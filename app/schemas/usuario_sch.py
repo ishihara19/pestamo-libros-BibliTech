@@ -1,7 +1,13 @@
-from pydantic import BaseModel, ConfigDict, Field, field_validator, EmailStr,ValidationInfo
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    EmailStr,
+    ValidationInfo,
+)
 from datetime import date, datetime
 from typing import Optional
-import re
 
 from ..utils.tiempo_tz import to_localtime
 from ..utils.utils import (
@@ -11,6 +17,7 @@ from ..utils.utils import (
     normalizar_nombre_propio,
     validar_tipo_documento_edad,
 )
+from ..core.config import settings
 
 
 class UsuarioBase(BaseModel):
@@ -46,14 +53,17 @@ class UsuarioCreate(BaseModel):
     @classmethod
     def validar_fecha_nacimiento(cls, v: date, info: ValidationInfo) -> date:
         """Valida edad mínima y coherencia con tipo_documento_id si está presente."""
-        if not tiene_edad_minima(v, 9):
-            raise ValueError("El usuario debe tener al menos 9 años.")
-        
+        if not tiene_edad_minima(v, settings.EDAD_MINIMA_USUARIO):
+            raise ValueError(
+                f"El usuario debe tener al menos {settings.EDAD_MINIMA_USUARIO} años."
+            )
+
         tipo_documento = info.data.get("tipo_documento_id")
         if tipo_documento:
             validar_tipo_documento_edad(tipo_documento, v)
-        
+
         return v
+
     @field_validator("correo")
     @classmethod
     def validar_y_normalizar_correo(cls, v: str) -> str:
@@ -86,8 +96,10 @@ class UsuarioUpdateAdmin(BaseModel):
     @field_validator("fecha_nacimiento")
     @classmethod
     def validar_fecha_nacimiento(cls, v: date) -> date:
-        if not tiene_edad_minima(v, 9):
-            raise ValueError("El usuario debe tener al menos 9 años.")
+        if not tiene_edad_minima(v, settings.EDAD_MINIMA_USUARIO):
+            raise ValueError(
+                f"El usuario debe tener al menos {settings.EDAD_MINIMA_USUARIO} años."
+            )
         return v
 
     @field_validator("correo")
