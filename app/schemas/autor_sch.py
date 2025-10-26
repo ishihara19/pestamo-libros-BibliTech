@@ -29,6 +29,8 @@ class AutorUpdate(BaseModel):
     @field_validator("nombre", "apellido")
     @classmethod
     def validar_y_normalizar_nombre(cls, v: str) -> str:
+        if v is None:
+            return v        
         return normalizar_nombre_propio(v)
 
 
