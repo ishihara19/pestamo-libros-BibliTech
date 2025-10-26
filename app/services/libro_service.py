@@ -72,8 +72,20 @@ class LibroService:
         return [LibroView.model_validate(libro) for libro in libros]
 
     @staticmethod
-    async def obtener_libro_por_id(libro_id: int, db: AsyncSession) -> LibroView:
+    async def obtener_libro_por_id(
+        libro_id: int, db: AsyncSession, normalizado: bool
+    ) -> LibroView | LibroViewNormalized:
         """Obtener un libro por su ID."""
+        if normalizado:
+            result = await db.execute(
+                select(Libro)
+                .options(selectinload(Libro.categoria))
+                .where(Libro.id == libro_id)
+            )
+            libro = result.scalar()
+            if not libro:
+                raise HTTPException(status_code=404, detail="Libro no encontrado")
+            return LibroViewNormalized.from_model(libro)
         result = await db.execute(select(Libro).where(Libro.id == libro_id))
         libro = result.scalar()
         if not libro:
