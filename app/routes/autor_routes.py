@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..schemas.autor_sch import AutorCreate, AutorUpdate, AutorView
 from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
 from ..services.autor_service import AutorService
-from ..schemas.generic_sch import GernericMessage
+from ..schemas.generic_sch import GenericMessage
 from ..core.db.postgre import get_session
 from ..dependencies.auth import obtener_usuario_actual_administrador, obtener_usuario_actual_activo
 from ..models.usuario import Usuario
@@ -56,7 +56,7 @@ async def actualizar_autor(
     """Actualizar un autor por su ID"""
     return await AutorService.actualizar_autor(id, autor, db)
 
-@autor_router.delete("/{id}", response_model=GernericMessage)
+@autor_router.delete("/{id}", response_model=GenericMessage)
 async def eliminar_autor(
     id: int,
     db: AsyncSession = Depends(get_session),

@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from ..models.autor import Autor
 from ..schemas.autor_sch import AutorCreate, AutorUpdate, AutorView
 from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
-from ..schemas.generic_sch import GernericMessage
+from ..schemas.generic_sch import GenericMessage
 
 class AutorService:
     
@@ -91,7 +91,7 @@ class AutorService:
     async def eliminar_autor(
         autor_id: int, 
         db: AsyncSession
-    ) -> GernericMessage:
+    ) -> GenericMessage:
         """Eliminar un autor de la base de datos."""
         result = await db.execute(select(Autor).where(Autor.id == autor_id))
         autor = result.scalar_one_or_none()
@@ -101,4 +101,4 @@ class AutorService:
         
         await db.delete(autor)
         await db.commit()
-        return GernericMessage(message="Autor eliminado con éxito")
+        return GenericMessage(message="Autor eliminado con éxito")
