@@ -10,6 +10,7 @@ from .routes.tipo_documento_routers import tipo_documento_router
 from .routes.rol_routes import rol_router
 from .routes.usuario_routes import usuario_router
 from .routes.auth_routes import auth
+from .routes.autor_routes import autor_router
 from .utils.utils import normalizar_nombre_propio
 
 
@@ -35,6 +36,7 @@ app.include_router(tipo_documento_router, prefix=settings.PREFIX_API_VERSION)
 app.include_router(rol_router, prefix=settings.PREFIX_API_VERSION)
 app.include_router(usuario_router, prefix=settings.PREFIX_API_VERSION)
 app.include_router(auth, prefix=settings.PREFIX_API_VERSION)
+app.include_router(autor_router, prefix=settings.PREFIX_API_VERSION)
 
 
 class rootResponse(BaseModel):
