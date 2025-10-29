@@ -20,21 +20,55 @@ from ..core.security import hash_password, verify_password
 from ..utils.generar_token import generar_token
 from ..utils.enviar_correo import enviar_correo_restablecimiento
 from ..core.config import settings
+from ..core.db.postgre import set_app_context, clear_app_context
 
 
 class UsuarioService:
 
     @staticmethod
     async def create_usuario(
-        usuario: UsuarioCreate, db: AsyncSession
+        usuario: UsuarioCreate,
+        db: AsyncSession,
+        host: str,
+        ip: str,
+        username: str = None,
     ) -> UsuarioReadNormalized:
         """Crear un nuevo usuario en la base de datos."""
-        nuevo_usuario = Usuario(**usuario.model_dump())
-        nuevo_usuario.contrasena = hash_password(usuario.contrasena)
-        db.add(nuevo_usuario)
-        await db.commit()
-        await db.refresh(nuevo_usuario)
-        return UsuarioReadNormalized.from_model(nuevo_usuario)
+
+        if username is None:
+            username = "sistema"
+
+        try:
+            # Establece un contexto de auditoría
+            await set_app_context(db, username, ip, host, "crear_usuario")
+
+            nuevo_usuario = Usuario(**usuario.model_dump())
+            nuevo_usuario.contrasena = hash_password(usuario.contrasena)
+
+            db.add(nuevo_usuario)
+            await db.commit()
+            await db.refresh(nuevo_usuario)
+
+            result = await db.execute(
+                select(Usuario)
+                .options(
+                    selectinload(Usuario.tipo_documento),
+                    selectinload(Usuario.estado),
+                    selectinload(Usuario.rol),
+                )
+                .where(Usuario.id == nuevo_usuario.id)
+            )
+            usuario_completo = result.scalar_one()
+
+            return UsuarioReadNormalized.from_model(usuario_completo)
+        
+        except Exception as e:
+            await db.rollback()
+            raise         
+
+        finally:
+
+            await clear_app_context(db)
 
     @staticmethod
     async def listar_usuarios(
@@ -114,107 +148,211 @@ class UsuarioService:
 
     @staticmethod
     async def actualizar_perfil_usuario(
-        id: int, usuario_update: UsuarioUpdatePerfil, db: AsyncSession
+        id: int,
+        usuario_update: UsuarioUpdatePerfil,
+        db: AsyncSession,
+        ip: str,
+        host: str,
+        username: str,
     ) -> UsuarioReadNormalized:
         """Actualizar el perfil de un usuario."""
-        result = await db.execute(select(Usuario).where(Usuario.id == id))
-        usuario = result.scalar()
 
-        if not usuario:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        try:
+            await set_app_context(db, username, ip, host, "actualizar_perfil_usuario")
+            result = await db.execute(select(Usuario).where(Usuario.id == id))
+            usuario = result.scalar_one_or_none()
 
-        for var, value in usuario_update.model_dump(exclude_unset=True).items():
-            setattr(usuario, var, value)
+            if not usuario:
+                raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-        db.add(usuario)
-        await db.commit()
-        await db.refresh(usuario)
+            for var, value in usuario_update.model_dump(exclude_unset=True).items():
+                setattr(usuario, var, value)
 
-        return UsuarioReadNormalized.from_model(usuario)
+            db.add(usuario)
+            await db.commit()
+            await db.refresh(usuario)
+
+            return UsuarioReadNormalized.from_model(usuario)
+        except Exception as e:
+            await db.rollback()
+            raise 
+
+        finally:
+
+            await clear_app_context(db)
 
     @staticmethod
     async def actualizar_contrasena_usuario(
-        id: int, usuario_update: UsuarioUpdateContrasena, db: AsyncSession
+        id: int,
+        usuario_update: UsuarioUpdateContrasena,
+        db: AsyncSession,
+        ip: str,
+        host: str,
+        username: str,
     ) -> UsuarioMensaje:
         """Actualizar la contraseña de un usuario."""
-        result = await db.execute(select(Usuario).where(Usuario.id == id))
-        usuario = result.scalar()
 
-        if not usuario:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        try:
+            await set_app_context(
+                db, username, ip, host, "actualizar_contraseña_usuario"
+            )
 
-        if not verify_password(usuario_update.contrasena_actual, usuario.contrasena):
-            raise HTTPException(status_code=400, detail="Contraseña actual incorrecta")
+            result = await db.execute(select(Usuario).where(Usuario.id == id))
+            usuario = result.scalar()
 
-        usuario.contrasena = hash_password(usuario_update.contrasena_nueva)
+            if not usuario:
+                raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-        db.add(usuario)
-        await db.commit()
-        return UsuarioMensaje(message="Contraseña actualizada exitosamente")
+            if not verify_password(
+                usuario_update.contrasena_actual, usuario.contrasena
+            ):
+                raise HTTPException(
+                    status_code=400, detail="Contraseña actual incorrecta"
+                )
+
+            usuario.contrasena = hash_password(usuario_update.contrasena_nueva)
+
+            db.add(usuario)
+            await db.commit()
+            return UsuarioMensaje(message="Contraseña actualizada exitosamente")
+        except Exception as e:
+            await db.rollback()
+            raise 
+        finally:
+            await clear_app_context(db)
 
     @staticmethod
     async def restablecer_contrasena_usuario(
-        contrasena_resetear: UsuarioResetearContrasena, db: AsyncSession
+        contrasena_resetear: UsuarioResetearContrasena,
+        db: AsyncSession,
+        ip: str,
+        host: str,
+        username: str = None,
     ) -> None:
         """Restablecer la contraseña de un usuario."""
-        result = await db.execute(
-            select(Usuario).where(Usuario.correo == contrasena_resetear.correo)
-        )
-        usuario = result.scalar()
 
-        if not usuario:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        try:
 
-        token = generar_token()
-        usuario.token = token
-        usuario.token_expiracion = datetime.now(timezone.utc) + timedelta(
-            minutes=settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES
-        )
-        await db.commit()
+            if username is None:
+                username = "sistema"
 
-        await enviar_correo_restablecimiento(usuario.correo, token)
+            await set_app_context(
+                db, username, ip, host, "generar_token_recuperacion_contraseña_usuario"
+            )
+            result = await db.execute(
+                select(Usuario).where(Usuario.correo == contrasena_resetear.correo)
+            )
+            usuario = result.scalar()
 
-        return UsuarioMensaje(message="Correo de restablecimiento enviado")
+            if not usuario:
+                raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+            token = generar_token()
+            usuario.token = token
+            usuario.token_expiracion = datetime.now(timezone.utc) + timedelta(
+                minutes=settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES
+            )
+
+            await db.commit()
+
+            await enviar_correo_restablecimiento(usuario.correo, token)
+
+            return UsuarioMensaje(message="Correo de restablecimiento enviado")
+        except Exception as e:
+            await db.rollback()
+            raise
+        finally:
+            await clear_app_context(db)
 
     @staticmethod
     async def verificar_token_usuario(
-        verificacion: UsuarioVerificarToken, db: AsyncSession
+        verificacion: UsuarioVerificarToken, db: AsyncSession, ip: str, host: str
     ) -> UsuarioMensaje:
         """Verificar el token de restablecimiento de contraseña."""
-        result = await db.execute(
-            select(Usuario).where(Usuario.correo == verificacion.correo)
-        )
-        usuario = result.scalar()
 
-        if not usuario:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        try:
+            result = await db.execute(
+                select(Usuario).where(Usuario.correo == verificacion.correo)
+            )
+            usuario = result.scalar()
 
-        if usuario.token != verificacion.token:
-            raise HTTPException(status_code=400, detail="Token inválido")
+            if not usuario:
+                raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-        if not usuario.token_expiracion or usuario.token_expiracion < datetime.now(
-            timezone.utc
-        ):
-            raise HTTPException(status_code=400, detail="Token expirado")
+            username = usuario.correo
+            await set_app_context(
+                db, username, ip, host, "verificar_token_cambio_contraseña_usuario"
+            )
 
-        usuario.contrasena = hash_password(verificacion.contrasena_nueva)
-        usuario.token = None
-        usuario.token_expiracion = None
-        db.add(usuario)
-        await db.commit()
+            if usuario.token != verificacion.token:
+                raise HTTPException(status_code=400, detail="Token inválido")
 
-        return UsuarioMensaje(message="Contraseña restablecida exitosamente")
+            if not usuario.token_expiracion or usuario.token_expiracion < datetime.now(
+                timezone.utc
+            ):
+                raise HTTPException(status_code=400, detail="Token expirado")
+
+            usuario.contrasena = hash_password(verificacion.contrasena_nueva)
+            usuario.token = None
+            usuario.token_expiracion = None
+            db.add(usuario)
+            await db.commit()
+
+            return UsuarioMensaje(message="Contraseña restablecida exitosamente")
+        except Exception as e:
+            await db.rollback()
+            raise
+        finally:
+            await clear_app_context(db)
 
     @staticmethod
-    async def eliminar_usuario(id: int, db: AsyncSession) -> UsuarioMensaje:
+    async def eliminacion_suave_usuario(
+        id: int, db: AsyncSession, ip: str, host: str, username: str
+    ) -> UsuarioMensaje:
+        """Eliminación suave de un usuario por su ID."""
+
+        try:
+            await set_app_context(db, username, ip, host, "eliminacion_suave_usuario")
+
+            result = await db.execute(select(Usuario).where(Usuario.id == id))
+            usuario = result.scalar()
+
+            if not usuario:
+                raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+            usuario.estado_id = settings.ESTADO_INACTIVO
+            db.add(usuario)
+            await db.commit()
+
+            return UsuarioMensaje(message="Usuario eliminado suavemente exitosamente")
+        except Exception as e:
+            await db.rollback()
+            raise
+        finally:
+            await clear_app_context(db)
+
+    @staticmethod
+    async def eliminar_usuario(
+        id: int, db: AsyncSession, ip: str, host: str, username: str
+    ) -> UsuarioMensaje:
         """Eliminar un usuario por su ID."""
-        result = await db.execute(select(Usuario).where(Usuario.id == id))
-        usuario = result.scalar()
 
-        if not usuario:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        try:
+            await set_app_context(db, username, ip, host, "eliminar_usuario")
+            result = await db.execute(select(Usuario).where(Usuario.id == id))
+            usuario = result.scalar()
 
-        await db.delete(usuario)
-        await db.commit()
+            if not usuario:
+                raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-        return UsuarioMensaje(message="Usuario eliminado exitosamente")
+            await db.delete(usuario)
+            await db.commit()
+
+            return UsuarioMensaje(message="Usuario eliminado exitosamente")
+        
+        except Exception as e:
+            await db.rollback()
+            raise
+
+        finally:
+            await clear_app_context(db)

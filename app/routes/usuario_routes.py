@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 
@@ -26,10 +26,16 @@ usuario_router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
 @usuario_router.post("", response_model=UsuarioView, status_code=201)
 async def crear_usuario(
-    usuario: UsuarioCreate, db: AsyncSession = Depends(get_session)
+    usuario: UsuarioCreate,
+    db: AsyncSession = Depends(get_session),
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador),
 ):
     """Crear un nuevo usuario"""
-    return await UsuarioService.create_usuario(usuario, db)
+    ip = usuario_admin.ip
+    host = usuario_admin.host
+    username = usuario_admin.username
+
+    return await UsuarioService.create_usuario(usuario, db, host, ip, username)
 
 
 @usuario_router.get(
@@ -79,7 +85,12 @@ async def actualizar_perfil_usuario(
     usuario_actual: Usuario = Depends(obtener_usuario_actual_activo),
 ):
     """Actualizar el perfil de un usuario existente"""
-    return await UsuarioService.actualizar_perfil_usuario(id, usuario_update, db)
+    ip = usuario_actual.ip
+    host = usuario_actual.host
+    username = usuario_actual.username
+    return await UsuarioService.actualizar_perfil_usuario(
+        id, usuario_update, db, ip, host, username
+    )
 
 
 @usuario_router.put("/{id}/contrasena", response_model=UsuarioMensaje)
@@ -90,24 +101,51 @@ async def actualizar_contrasena_usuario(
     usuario_actual: Usuario = Depends(obtener_usuario_actual_activo),
 ):
     """Actualizar la contraseña de un usuario existente"""
-    return await UsuarioService.actualizar_contrasena_usuario(id, contrasena_update, db)
+    ip = usuario_actual.ip
+    host = usuario_actual.host
+    username = usuario_actual.username
+    return await UsuarioService.actualizar_contrasena_usuario(
+        id, contrasena_update, db, ip, host, username
+    )
 
 
 @usuario_router.post("/resetear-contrasena", response_model=UsuarioMensaje)
 async def restablecer_contrasena_usuario(
     contrasena_resetear: UsuarioResetearContrasena,
-    db: AsyncSession = Depends(get_session),
+    request: Request,
+    db: AsyncSession = Depends(get_session),    
 ):
     """Restablecer la contraseña de un usuario"""
-    return await UsuarioService.restablecer_contrasena_usuario(contrasena_resetear, db)
+    ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0]
+    host = request.headers.get("host")
+    return await UsuarioService.restablecer_contrasena_usuario(
+        contrasena_resetear, db, ip, host
+    )
 
 
 @usuario_router.post("/verificar-token", response_model=UsuarioMensaje)
 async def verificar_token_usuario(
-    verificacion: UsuarioVerificarToken, db: AsyncSession = Depends(get_session)
+    verificacion: UsuarioVerificarToken,
+    request: Request,
+    db: AsyncSession = Depends(get_session),    
 ):
     """Verificar el token y restablecer la contraseña"""
-    return await UsuarioService.verificar_token_usuario(verificacion, db)
+    ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0]
+    host = request.headers.get("host", "sistema")
+    return await UsuarioService.verificar_token_usuario(verificacion, db, ip, host)
+
+
+@usuario_router.delete("/{id}/suave", response_model=UsuarioMensaje)
+async def eliminar_usuario_suave(
+    id: int,
+    db: AsyncSession = Depends(get_session),
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador),
+):
+    """Eliminar un usuario existente de forma suave (soft delete)"""
+    ip = usuario_admin.ip
+    host = usuario_admin.host
+    username = usuario_admin.username
+    return await UsuarioService.eliminar_usuario_suave(id, db, ip, host, username)
 
 
 @usuario_router.delete("/{id}", status_code=204)
@@ -117,4 +155,7 @@ async def eliminar_usuario(
     usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador),
 ):
     """Eliminar un usuario existente"""
-    return await UsuarioService.eliminar_usuario(id, db)
+    ip = usuario_admin.ip
+    host = usuario_admin.host
+    username = usuario_admin.username
+    return await UsuarioService.eliminar_usuario(id, db, ip, host, username)

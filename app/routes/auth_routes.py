@@ -29,10 +29,14 @@ auth = APIRouter(prefix="/auth", tags=["auth"])
 
 @auth.post("/registro", response_model=UsuarioReadNormalized, status_code=201)
 async def registrar_usuario(
-    usuario: UsuarioCreate, db: AsyncSession = Depends(get_session)
+    usuario: UsuarioCreate,
+    db: AsyncSession = Depends(get_session),
+    request: Request = None,
 ):
     """Crear un nuevo usuario"""
-    return await UsuarioService.create_usuario(usuario, db)
+    ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0]
+    host = request.headers.get("host", "sistema")
+    return await UsuarioService.create_usuario(usuario, db, host, ip)
 
 
 @auth.post("/inicio-sesion", response_model=Token)
