@@ -13,6 +13,7 @@ from .routes.auth_routes import auth
 from .routes.autor_routes import autor_router
 from .routes.categoria_routes import categoria_router
 from .routes.libro_routes import libro_router
+from .routes.aduditoria_router import auditoria_router
 from .utils.utils import normalizar_nombre_propio
 
 
@@ -41,6 +42,7 @@ app.include_router(auth, prefix=settings.PREFIX_API_VERSION)
 app.include_router(autor_router, prefix=settings.PREFIX_API_VERSION)
 app.include_router(categoria_router, prefix=settings.PREFIX_API_VERSION)
 app.include_router(libro_router, prefix=settings.PREFIX_API_VERSION)
+app.include_router(auditoria_router, prefix=settings.PREFIX_API_VERSION)
 
 
 class rootResponse(BaseModel):
