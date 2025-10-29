@@ -45,6 +45,7 @@ class Settings:
     # Application specific settings
     ROL_ADMIN = int(os.getenv("ROL_ADMIN", 2))
     ESTADO_ACTIVO = int(os.getenv("ESTADO_ACTIVO", 1))
+    ESTADO_INACTIVO = int(os.getenv("ESTADO_INACTIVO", 2))
     DOCUMENTO_MAYOR_EDAD_ID = int(os.getenv("DOCUMENTO_MAYOR_EDAD_ID", 1))
     DOCUMENTO_MENOR_EDAD_ID = int(os.getenv("DOCUMENTO_MENOR_EDAD_ID", 2))
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES = int(
