@@ -9,10 +9,10 @@ from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
 
 
 class AuditoriaService:
-    
+
     @staticmethod
     async def listar_auditorias(
-        db: AsyncSession, 
+        db: AsyncSession,
         pagination: PaginationParams | None = None,
         tabla: str | None = None,
         operacion: str | None = None,
@@ -29,14 +29,18 @@ class AuditoriaService:
 
         # --- Construir filtros reutilizables ---
         filters = []
-        
+
         if tabla:
-            tabla_escaped = tabla.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            tabla_escaped = (
+                tabla.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            )
             filters.append(Auditoria.tabla.ilike(f"%{tabla_escaped}%"))
 
         if operacion:
             # Escapar caracteres especiales de LIKE para evitar búsquedas inesperadas
-            operacion_escaped = operacion.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            operacion_escaped = (
+                operacion.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            )
             filters.append(Auditoria.operacion.ilike(f"%{operacion_escaped}%"))
 
         # Conversión segura de fechas
@@ -45,26 +49,40 @@ class AuditoriaService:
                 desde_fecha_dt = datetime.fromisoformat(desde_fecha)
                 filters.append(Auditoria.fecha_operacion >= desde_fecha_dt)
             except ValueError:
-                raise ValueError("El formato de 'desde_fecha' no es válido. Usa ISO 8601 (YYYY-MM-DD o YYYY-MM-DDTHH:MM:SS).")
-        
+                raise ValueError(
+                    "El formato de 'desde_fecha' no es válido. Usa ISO 8601 (YYYY-MM-DD o YYYY-MM-DDTHH:MM:SS)."
+                )
+
         if hasta_fecha:
             try:
                 hasta_fecha_dt = datetime.fromisoformat(hasta_fecha)
                 filters.append(Auditoria.fecha_operacion <= hasta_fecha_dt)
             except ValueError:
-                raise ValueError("El formato de 'hasta_fecha' no es válido. Usa ISO 8601 (YYYY-MM-DD o YYYY-MM-DDTHH:MM:SS).")
+                raise ValueError(
+                    "El formato de 'hasta_fecha' no es válido. Usa ISO 8601 (YYYY-MM-DD o YYYY-MM-DDTHH:MM:SS)."
+                )
 
         # Búsqueda parcial (case-insensitive) con escape de caracteres LIKE
         if usuario_app:
-            usuario_app_escaped = usuario_app.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            usuario_app_escaped = (
+                usuario_app.replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_")
+            )
             filters.append(Auditoria.usuario_app.ilike(f"%{usuario_app_escaped}%"))
-        
+
         if operacion_app:
-            operacion_app_escaped = operacion_app.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            operacion_app_escaped = (
+                operacion_app.replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_")
+            )
             filters.append(Auditoria.operacion_app.ilike(f"%{operacion_app_escaped}%"))
 
         # Query principal con filtros
-        query = select(Auditoria).where(*filters).order_by(Auditoria.fecha_operacion.desc())
+        query = (
+            select(Auditoria).where(*filters).order_by(Auditoria.fecha_operacion.desc())
+        )
 
         # --- Paginación ---
         if pagination:
@@ -87,23 +105,9 @@ class AuditoriaService:
         return [AuditoriaView.model_validate(a) for a in auditorias]
 
 
-@staticmethod
-async def obtener_auditoria_por_id(
-    auditoria_id: int, 
-    db: AsyncSession
-) -> AuditoriaView:
-    """Obtener un registro de auditoría por su ID."""
-    result = await db.execute(select(Auditoria).where(Auditoria.id == auditoria_id))
-    auditoria = result.scalar_one_or_none()
-    if not auditoria:
-        raise HTTPException(status_code=404, detail="Auditoría no encontrada")
-    return AuditoriaView.model_validate(auditoria)
-        
-    
     @staticmethod
     async def obtener_auditoria_por_id(
-        auditoria_id: int, 
-        db: AsyncSession
+        auditoria_id: int, db: AsyncSession
     ) -> AuditoriaView:
         """Obtener un registro de auditoría por su ID."""
         result = await db.execute(select(Auditoria).where(Auditoria.id == auditoria_id))
@@ -111,4 +115,3 @@ async def obtener_auditoria_por_id(
         if not auditoria:
             raise HTTPException(status_code=404, detail="Auditoría no encontrada")
         return AuditoriaView.model_validate(auditoria)
-    

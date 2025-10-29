@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, text
+from sqlalchemy import select, func
 from fastapi import HTTPException
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import selectinload
@@ -164,15 +164,14 @@ class UsuarioService:
             for var, value in usuario_update.model_dump(exclude_unset=True).items():
                 setattr(usuario, var, value)
 
-            usuario.ip = ip
-            usuario.host = host
-            usuario.username = username
-
             db.add(usuario)
             await db.commit()
             await db.refresh(usuario)
 
             return UsuarioReadNormalized.from_model(usuario)
+        except Exception as e:
+            await db.rollback()  # <- IMPORTANTE
+            raise e
 
         finally:
 
@@ -212,6 +211,9 @@ class UsuarioService:
             db.add(usuario)
             await db.commit()
             return UsuarioMensaje(message="Contraseña actualizada exitosamente")
+        except Exception as e:
+            await db.rollback()  # <- IMPORTANTE
+            raise e
         finally:
             await clear_app_context(db)
 
@@ -252,6 +254,9 @@ class UsuarioService:
             await enviar_correo_restablecimiento(usuario.correo, token)
 
             return UsuarioMensaje(message="Correo de restablecimiento enviado")
+        except Exception as e:
+            await db.rollback()  # <- IMPORTANTE
+            raise e
         finally:
             await clear_app_context(db)
 
@@ -290,6 +295,9 @@ class UsuarioService:
             await db.commit()
 
             return UsuarioMensaje(message="Contraseña restablecida exitosamente")
+        except Exception as e:
+            await db.rollback()  # <- IMPORTANTE
+            raise e
         finally:
             await clear_app_context(db)
 
@@ -309,14 +317,13 @@ class UsuarioService:
                 raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
             usuario.estado_id = settings.ESTADO_INACTIVO
-            usuario.ip = ip
-            usuario.host = host
-            usuario.username = username
-
             db.add(usuario)
             await db.commit()
 
             return UsuarioMensaje(message="Usuario eliminado suavemente exitosamente")
+        except Exception as e:
+            await db.rollback()  # <- IMPORTANTE
+            raise e
         finally:
             await clear_app_context(db)
 
@@ -334,14 +341,14 @@ class UsuarioService:
             if not usuario:
                 raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-            usuario.ip = ip
-            usuario.host = host
-            usuario.username = username
-
             await db.delete(usuario)
             await db.commit()
 
             return UsuarioMensaje(message="Usuario eliminado exitosamente")
+        
+        except Exception as e:
+            await db.rollback()  # <- IMPORTANTE
+            raise e
 
         finally:
             await clear_app_context(db)
