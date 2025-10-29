@@ -103,7 +103,7 @@ async def obtener_auditoria(
     usuario_admin: bool = Depends(obtener_usuario_actual_administrador),
 ):
     """Obtener un registro de auditoría por su ID"""
-    auditoria = await AuditoriaService.obtener_auditoria(id, db)
+    auditoria = await AuditoriaService.obtener_auditoria_por_id(id, db)
     if not auditoria:
         raise HTTPException(status_code=404, detail="Registro de auditoría no encontrado")
     return auditoria
