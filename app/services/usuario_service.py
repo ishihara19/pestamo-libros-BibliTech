@@ -61,9 +61,13 @@ class UsuarioService:
             usuario_completo = result.scalar_one()
 
             return UsuarioReadNormalized.from_model(usuario_completo)
+        
+        except Exception as e:
+            await db.rollback()
+            raise         
 
         finally:
-            # Limpia el contexto siempre, incluso si ocurre un error
+
             await clear_app_context(db)
 
     @staticmethod
@@ -170,8 +174,8 @@ class UsuarioService:
 
             return UsuarioReadNormalized.from_model(usuario)
         except Exception as e:
-            await db.rollback()  # <- IMPORTANTE
-            raise e
+            await db.rollback()
+            raise 
 
         finally:
 
@@ -212,8 +216,8 @@ class UsuarioService:
             await db.commit()
             return UsuarioMensaje(message="Contraseña actualizada exitosamente")
         except Exception as e:
-            await db.rollback()  # <- IMPORTANTE
-            raise e
+            await db.rollback()
+            raise 
         finally:
             await clear_app_context(db)
 
@@ -255,8 +259,8 @@ class UsuarioService:
 
             return UsuarioMensaje(message="Correo de restablecimiento enviado")
         except Exception as e:
-            await db.rollback()  # <- IMPORTANTE
-            raise e
+            await db.rollback()
+            raise
         finally:
             await clear_app_context(db)
 
@@ -296,8 +300,8 @@ class UsuarioService:
 
             return UsuarioMensaje(message="Contraseña restablecida exitosamente")
         except Exception as e:
-            await db.rollback()  # <- IMPORTANTE
-            raise e
+            await db.rollback()
+            raise
         finally:
             await clear_app_context(db)
 
@@ -322,8 +326,8 @@ class UsuarioService:
 
             return UsuarioMensaje(message="Usuario eliminado suavemente exitosamente")
         except Exception as e:
-            await db.rollback()  # <- IMPORTANTE
-            raise e
+            await db.rollback()
+            raise
         finally:
             await clear_app_context(db)
 
@@ -347,8 +351,8 @@ class UsuarioService:
             return UsuarioMensaje(message="Usuario eliminado exitosamente")
         
         except Exception as e:
-            await db.rollback()  # <- IMPORTANTE
-            raise e
+            await db.rollback()
+            raise
 
         finally:
             await clear_app_context(db)

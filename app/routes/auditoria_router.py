@@ -65,7 +65,7 @@ async def listar_auditorias(
     - Si se omiten, retorna todos los registros (sin paginación)
     
     **Filtros:**
-    - `tabla`: Búsqueda exacta del nombre de la tabla\n
+    - `tabla`: Búsqueda parcial del nombre de la tabla\n
     - `operacion`: Búsqueda parcial de la operación SQL (insert, update, delete)
     - `desde_fecha` / `hasta_fecha`: Rango de fechas en formato ISO 8601
     - `usuario_app`: Búsqueda parcial del usuario (case-insensitive)
@@ -103,7 +103,4 @@ async def obtener_auditoria(
     usuario_admin: bool = Depends(obtener_usuario_actual_administrador),
 ):
     """Obtener un registro de auditoría por su ID"""
-    auditoria = await AuditoriaService.obtener_auditoria(id, db)
-    if not auditoria:
-        raise HTTPException(status_code=404, detail="Registro de auditoría no encontrado")
-    return auditoria
+    return await AuditoriaService.obtener_auditoria(id, db)   

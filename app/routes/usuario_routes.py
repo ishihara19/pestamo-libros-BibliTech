@@ -112,12 +112,12 @@ async def actualizar_contrasena_usuario(
 @usuario_router.post("/resetear-contrasena", response_model=UsuarioMensaje)
 async def restablecer_contrasena_usuario(
     contrasena_resetear: UsuarioResetearContrasena,
-    db: AsyncSession = Depends(get_session),
-    request: Request = None,
+    request: Request,
+    db: AsyncSession = Depends(get_session),    
 ):
     """Restablecer la contraseña de un usuario"""
     ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0]
-    host = request.headers.get("host", "sistema")
+    host = request.headers.get("host")
     return await UsuarioService.restablecer_contrasena_usuario(
         contrasena_resetear, db, ip, host
     )
@@ -126,8 +126,8 @@ async def restablecer_contrasena_usuario(
 @usuario_router.post("/verificar-token", response_model=UsuarioMensaje)
 async def verificar_token_usuario(
     verificacion: UsuarioVerificarToken,
-    db: AsyncSession = Depends(get_session),
-    request: Request = None,
+    request: Request,
+    db: AsyncSession = Depends(get_session),    
 ):
     """Verificar el token y restablecer la contraseña"""
     ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0]
