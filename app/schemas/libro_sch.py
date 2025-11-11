@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 from ..utils.tiempo_tz import to_localtime
 
@@ -8,7 +8,8 @@ class LibroBase(BaseModel):
     descripcion: str = Field(..., max_length=1000)
     categoria_id: int
     editorial: str = Field(..., max_length=100)
-    fecha_publicacion: datetime = Field(...)
+    fecha_publicacion: date= Field(...)
+    
 
 class LibroCreate(LibroBase):
     pass
@@ -19,12 +20,14 @@ class LibroUpdate(BaseModel):
     categoria_id: Optional[int]
     editorial: Optional[str] = Field(None, max_length=100)
     fecha_publicacion: Optional[datetime] = Field(None)
-
+    imagen_url: Optional[str] = Field(None)
+    
 class LibroView(LibroBase):
     id: int
     creado_en: datetime
     actualizado_en: Optional[datetime]
-
+    imagen_url: Optional[str] = Field(None)
+    
     model_config = ConfigDict(from_attributes=True)
 
     @classmethod
@@ -42,7 +45,9 @@ class LibroViewNormalized(BaseModel):
     categoria: Optional[str]
     editorial: Optional[str]
     creado_en: datetime
+    fecha_publicacion: Optional[date]
     actualizado_en: Optional[datetime]
+    imagen_url: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -63,6 +68,11 @@ class LibroViewNormalized(BaseModel):
             descripcion=libro.descripcion,
             categoria=libro.categoria.nombre if getattr(libro, "categoria", None) else None,
             editorial=libro.editorial,
+            imagen_url=libro.imagen_url,
             creado_en=libro.creado_en,
             actualizado_en=libro.actualizado_en,
         )
+        
+
+class LibroURLUpdate(BaseModel):
+    imagen_url: str        

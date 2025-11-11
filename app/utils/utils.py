@@ -1,6 +1,11 @@
 import re
 from datetime import date
+import magic
+from PIL import Image
+import io
 from ..core.config import settings
+
+ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 
 def normalizar_correo(correo: str) -> str:
@@ -110,3 +115,25 @@ def validar_tipo_documento_edad(tipo_documento: str, fecha_nacimiento: date) -> 
     if tipo_documento == settings.DOCUMENTO_MENOR_EDAD_ID and edad >= 18:
         raise ValueError("El tipo de documento 'T.I' es solo para menores de 18 años.")
     return True
+
+
+async def validate_image(file_bytes: bytes) -> str:
+    """
+    Valida que el archivo sea realmente una imagen permitida.
+    Retorna el tipo MIME si es válido.
+    """
+    mime_type = magic.from_buffer(file_bytes, mime=True)
+    if mime_type not in ALLOWED_MIME_TYPES:
+        raise ValueError(f"Tipo de archivo no permitido: {mime_type}")
+    return mime_type
+
+async def convert_to_webp(file_bytes: bytes, quality: int = 80) -> bytes:
+    """
+    Convierte cualquier imagen a formato WebP optimizado.
+    """
+    image = Image.open(io.BytesIO(file_bytes)).convert("RGB")
+    output = io.BytesIO()
+    image.save(output, format="WEBP", optimize=True, quality=quality)
+    return output.getvalue()
+
+
