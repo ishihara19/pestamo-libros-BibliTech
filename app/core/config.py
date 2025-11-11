@@ -44,6 +44,7 @@ class Settings:
 
     # Application specific settings
     ROL_ADMIN = int(os.getenv("ROL_ADMIN", 2))
+    ROL_BIBLIOTECARIO = int(os.getenv("ROL_BIBLIOTECARIO", 3))
     ESTADO_ACTIVO = int(os.getenv("ESTADO_ACTIVO", 1))
     ESTADO_INACTIVO = int(os.getenv("ESTADO_INACTIVO", 2))
     DOCUMENTO_MAYOR_EDAD_ID = int(os.getenv("DOCUMENTO_MAYOR_EDAD_ID", 1))
@@ -52,6 +53,15 @@ class Settings:
         os.getenv("PASSWORD_RESET_TOKEN_EXPIRE_MINUTES", 10)
     )
     EDAD_MINIMA_USUARIO = int(os.getenv("EDAD_MINIMA_USUARIO", 9))
+    
+    R2_ACCOUNT_ID = os.getenv("R2_ACCOUNT_ID")
+    R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
+    R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
+    R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME")
+    R2_ENDPOINT =f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+    R2_DOMINIO = os.getenv("R2_DOMINIO")
+
+    MAX_SIZE_MB_IMAGE_UPLOAD = int(os.getenv("MAX_SIZE_MB_IMAGE_UPLOAD", 5))
 
 
 settings = Settings()

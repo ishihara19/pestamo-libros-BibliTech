@@ -4,16 +4,15 @@ from fastapi import HTTPException
 from sqlalchemy.orm import selectinload
 
 from ..models.libro import Libro
-from ..schemas.libro_sch import LibroCreate, LibroUpdate, LibroView, LibroViewNormalized
+from ..schemas.libro_sch import LibroCreate, LibroUpdate, LibroView, LibroViewNormalized,  LibroURLUpdate
 from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
 from ..schemas.generic_sch import GenericMessage
 
-
 class LibroService:
     @staticmethod
-    async def create_libro(libro: LibroCreate, db: AsyncSession) -> LibroView:
+    async def create_libro(libro: LibroCreate, db: AsyncSession, imagen_url: str) -> LibroView:
         """Crear un nuevo libro en la base de datos."""
-        nuevo_libro = Libro(**libro.model_dump())
+        nuevo_libro = Libro(**libro.model_dump(), imagen_url=imagen_url)
         db.add(nuevo_libro)
         await db.commit()
         await db.refresh(nuevo_libro)
@@ -125,3 +124,21 @@ class LibroService:
         await db.commit()
 
         return GenericMessage(message="Libro eliminado exitosamente")
+
+    @staticmethod
+    async def actualizar_imagen_libro(
+        libro_id: int, imagen_url: LibroURLUpdate, db: AsyncSession
+    ) -> LibroURLUpdate:
+        """Actualizar la URL de la imagen de un libro por su ID."""
+        result = await db.execute(select(Libro).where(Libro.id == libro_id))
+        libro = result.scalar_one_or_none()
+
+        if not libro:
+            raise HTTPException(status_code=404, detail="Libro no encontrado")
+
+        libro.imagen_url = imagen_url
+        db.add(libro)
+        await db.commit()
+        await db.refresh(libro)
+
+        return LibroURLUpdate(imagen_url=libro.imagen_url)

@@ -90,3 +90,15 @@ async def obtener_usuario_actual_administrador(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Sin autorización"
         )
     return UsuarioReadNormalized.from_model(usuario_actual)
+
+async def obtener_usuario_actual_administrador_o_bibliotecario(
+    usuario_actual: Annotated[
+        Usuario,
+        Depends(obtener_usuario_actual_activo),
+    ],
+):
+    if usuario_actual.rol_id not in [settings.ROL_ADMIN, settings.ROL_BIBLIOTECARIO]:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Sin autorización"
+        )
+    return UsuarioReadNormalized.from_model(usuario_actual)
