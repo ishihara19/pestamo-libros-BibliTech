@@ -116,7 +116,7 @@ def validar_tipo_documento_edad(tipo_documento: str, fecha_nacimiento: date) -> 
         raise ValueError("El tipo de documento 'T.I' es solo para menores de 18 años.")
     return True
 
-async def  validate_max_size_image(file_bytes: bytes, max_size_mb: int = 2) -> None:
+async def validate_max_size_image(file_bytes: bytes, max_size_mb: int = 2) -> None:
     """
     Valida que el tamaño del archivo no exceda el máximo permitido.
         file_bytes: Bytes del archivo a validar.

@@ -8,7 +8,7 @@ class LibroBase(BaseModel):
     descripcion: str = Field(..., max_length=1000)
     categoria_id: int
     editorial: str = Field(..., max_length=100)
-    fecha_publicacion: date= Field(...)
+    fecha_publicacion: date = Field(...)
 
 class LibroCreate(LibroBase):
     pass
