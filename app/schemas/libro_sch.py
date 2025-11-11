@@ -9,7 +9,6 @@ class LibroBase(BaseModel):
     categoria_id: int
     editorial: str = Field(..., max_length=100)
     fecha_publicacion: date= Field(...)
-    
 
 class LibroCreate(LibroBase):
     pass
@@ -19,7 +18,7 @@ class LibroUpdate(BaseModel):
     descripcion: Optional[str] = Field(None, max_length=1000)
     categoria_id: Optional[int]
     editorial: Optional[str] = Field(None, max_length=100)
-    fecha_publicacion: Optional[datetime] = Field(None)
+    fecha_publicacion: Optional[date] = Field(None)
     imagen_url: Optional[str] = Field(None)
     
 class LibroView(LibroBase):
@@ -47,7 +46,7 @@ class LibroViewNormalized(BaseModel):
     creado_en: datetime
     fecha_publicacion: Optional[date]
     actualizado_en: Optional[datetime]
-    imagen_url: str
+    imagen_url: Optional[str]
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -68,6 +67,7 @@ class LibroViewNormalized(BaseModel):
             descripcion=libro.descripcion,
             categoria=libro.categoria.nombre if getattr(libro, "categoria", None) else None,
             editorial=libro.editorial,
+            fecha_publicacion=libro.fecha_publicacion,
             imagen_url=libro.imagen_url,
             creado_en=libro.creado_en,
             actualizado_en=libro.actualizado_en,

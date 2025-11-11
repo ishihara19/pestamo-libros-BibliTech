@@ -13,7 +13,7 @@ from ..dependencies.auth import obtener_usuario_actual_administrador, obtener_us
 from ..models.usuario import Usuario
 from ..core.config import settings
 from ..core.s3_client import S3Client
-from ..utils.utils import validate_image, convert_to_webp
+from ..utils.utils import validate_image, convert_to_webp, validate_max_size_image
 
 s3_client = S3Client(
     endpoint_url=settings.R2_ENDPOINT,
@@ -32,29 +32,39 @@ async def crear_libro(
     file: UploadFile = File(..., description="Imagen del libro en formato JPEG o PNG"),
     usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
 ):
-    """Convertir el string JSON a un objeto Pydantic"""
+    """Crear un nuevo libro con imagen subida."""
+    # Convertir el string JSON a un objeto Pydantic
     try:
         data = json.loads(libro)
         libro_obj = LibroCreate(**data)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al procesar los datos del libro: {e}")
-    
-    """Validar y procesar la imagen subida"""
+
+    # Validar y procesar la imagen subida
     imagen_file = await file.read()
+    
+    try:
+        await validate_max_size_image(imagen_file, max_size_mb=settings.MAX_SIZE_MB_IMAGE_UPLOAD)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
     try:
         await validate_image(imagen_file)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
-    """Optimizar y subir la imagen a S3"""
+
+    # Optimizar y subir la imagen a S3
     image_optimizada_bytes = await convert_to_webp(imagen_file)
     file_key = f"libros/{uuid.uuid4()}.webp"
-    s3_client.upload_fileobj(io.BytesIO(image_optimizada_bytes), file_key, "image/webp")
+    try:
+        s3_client.upload_fileobj(io.BytesIO(image_optimizada_bytes), file_key, "image/webp")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al subir la imagen a S3: {e}")
 
-    """Generar la URL de la imagen subida"""
+    # Generar la URL de la imagen subida
     imagen_url = s3_client.generate_file_url(file_key)
-    
-    """Guardar en la base de datos"""
+
+    # Guardar en la base de datos
     return await LibroService.create_libro(libro_obj, db, imagen_url)
 
 @libro_router.get("", response_model=list[LibroView] | list[LibroViewNormalized] | PaginatedResponse[LibroView] | PaginatedResponse[LibroViewNormalized])
@@ -103,14 +113,28 @@ async def actualizar_imagen_libro(
     usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
 ):
     """Actualizar la imagen de un libro por su ID"""
+    
+    # Validar y procesar la nueva imagen subida
     imagen_file = await file.read()
+    
+    try:
+        await validate_max_size_image(imagen_file, max_size_mb=settings.MAX_SIZE_MB_IMAGE_UPLOAD)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
     try:
         await validate_image(imagen_file)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     image_optimizada_bytes = await convert_to_webp(imagen_file)      
+
     file_key = f"libros/{uuid.uuid4()}.webp"
-    s3_client.upload_fileobj(io.BytesIO(image_optimizada_bytes), file_key, "image/webp")
+    
+    try:
+        s3_client.upload_fileobj(io.BytesIO(image_optimizada_bytes), file_key, "image/webp")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al subir la imagen a S3: {e}")
+    
     imagen_url = s3_client.generate_file_url(file_key)
     return await LibroService.actualizar_imagen_libro(id, imagen_url, db)
 
