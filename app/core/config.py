@@ -61,5 +61,7 @@ class Settings:
     R2_ENDPOINT =f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
     R2_DOMINIO = os.getenv("R2_DOMINIO")
 
+    MAX_SIZE_MB_IMAGE_UPLOAD = int(os.getenv("MAX_SIZE_MB_IMAGE_UPLOAD", 5))
+
 
 settings = Settings()

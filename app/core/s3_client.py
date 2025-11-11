@@ -1,9 +1,8 @@
 import boto3
 from botocore.client import Config
-import uuid
-from ..core.config import settings
 
 class S3Client:
+    """Cliente para interactuar con un servicio S3 compatible (como AWS S3 o Cloudflare R2)."""
     def __init__(self, endpoint_url: str, access_key_id: str, secret_access_key: str, bucket_name: str, domain: str):
         self.client = boto3.client(
             "s3",
@@ -17,6 +16,7 @@ class S3Client:
         self.domain = domain
 
     def upload_fileobj(self, file_obj, file_key: str, content_type: str):
+        """Sube un objeto de archivo al bucket S3."""
         self.client.upload_fileobj(
             file_obj,
             self.bucket_name,
@@ -25,4 +25,5 @@ class S3Client:
         )
 
     def generate_file_url(self, file_key: str) -> str:
+        """Genera la URL pública para un archivo en el bucket S3."""
         return f"https://{self.domain}/{file_key}"
