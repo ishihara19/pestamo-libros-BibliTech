@@ -152,3 +152,33 @@ async def convert_to_webp(file_bytes: bytes, quality: int = 80) -> bytes:
     return output.getvalue()
 
 
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
+from ..models.ejemplar import Ejemplar  # importa tu modelo real
+
+async def generar_codigo_unico(libro_id: int, session: AsyncSession) -> str:
+    """
+    Genera un código interno único para un ejemplar de un libro usando SQLAlchemy async.
+    Formato: L####-E###
+    """
+    # Buscar el código más alto actual para ese libro
+    stmt = (
+        select(Ejemplar.codigo_interno)
+        .where(Ejemplar.libro_id == libro_id)
+        .order_by(Ejemplar.codigo_interno.desc())
+        .limit(1)
+    )
+
+    result = await session.execute(stmt)
+    row = result.scalar_one_or_none()
+
+    # Si no hay ejemplares aún
+    if not row:
+        return f"L{libro_id:04d}-E001"
+
+    # Extraer el número del ejemplar más alto
+    num_actual = int(row.split("-E")[-1])
+    siguiente = num_actual + 1
+
+    # Generar el nuevo código
+    return f"L{libro_id:04d}-E{siguiente:03d}"

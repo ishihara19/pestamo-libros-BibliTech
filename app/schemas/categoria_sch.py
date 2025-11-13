@@ -5,7 +5,7 @@ from ..utils.tiempo_tz import to_localtime
 
 class CategoriaBase(BaseModel):
     nombre: str = Field(..., max_length=100)
-    descripcion: Optional[str] = Field(None, max_length=300)
+    descripcion: Optional[str] = Field(None, max_length=1000)
  
 
 class CategoriaCreate(CategoriaBase):
@@ -13,7 +13,7 @@ class CategoriaCreate(CategoriaBase):
 
 class CategoriaUpdate(BaseModel):
     nombre: Optional[str] = Field(None, max_length=100)
-    descripcion: Optional[str] = Field(None, max_length=300)
+    descripcion: Optional[str] = Field(None, max_length=1000)
     
 class CategoriaView(CategoriaBase):
     id: int

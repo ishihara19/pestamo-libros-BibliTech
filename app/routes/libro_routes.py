@@ -32,7 +32,18 @@ async def crear_libro(
     file: UploadFile = File(..., description="Imagen del libro en formato JPEG o PNG"),
     usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
 ):
-    """Crear un nuevo libro con imagen subida."""
+    """
+    Ejemplo del campo **libro**:
+    ```json
+    {
+      "titulo": "string",
+      "descripcion": "string",
+      "categoria_id": 0,
+      "editorial": "string",
+      "fecha_publicacion": "1935-12-30"
+    }
+    ```
+    """
     # Convertir el string JSON a un objeto Pydantic
     try:
         data = json.loads(libro)

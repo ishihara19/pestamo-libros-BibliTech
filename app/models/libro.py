@@ -17,5 +17,7 @@ class Libro(Base):
     creado_en = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     actualizado_en = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     imagen_url = Column(Text, nullable=False)
-    
+
+    # Relaciones
     categoria = relationship("Categoria", back_populates="libros")
+    ejemplar = relationship("Ejemplar", back_populates="libro")
