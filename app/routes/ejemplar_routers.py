@@ -13,6 +13,7 @@ from ..services.ejemplar_service import EjemplarService
 from ..core.db.postgre import get_session
 from ..dependencies.auth import obtener_usuario_actual_administrador, obtener_usuario_actual_activo
 from ..models.usuario import Usuario
+from ..schemas.generic_sch import GenericMessage
 
 ejemplar_router = APIRouter(prefix="/ejemplares", tags=["Ejemplares"])
 
@@ -42,14 +43,24 @@ async def listar_ejemplares(
     
     return await EjemplarService.listar_ejemplares(db, pagination, normalizado)
 
-@ejemplar_router.get("/{id}", response_model=EjemplarView)
-async def obtener_ejemplar(
-    id: int,
+@ejemplar_router.get("/codigo/{codigo_interno}", response_model=EjemplarReaderNormalized)
+async def obtener_ejemplar_por_codigo(
+    codigo_interno: str,
     db: AsyncSession = Depends(get_session),
     usuario_activo: Usuario = Depends(obtener_usuario_actual_activo)
 ):
+    """Obtener un ejemplar por su código interno"""
+    return await EjemplarService.obtener_ejemplar_por_codigo(codigo_interno, db)
+
+@ejemplar_router.get("/{id}", response_model=EjemplarView | EjemplarReaderNormalized)
+async def obtener_ejemplar_por_id(
+    id: int,
+    db: AsyncSession = Depends(get_session),
+    normalizado: bool = Query(False, description="Retornar datos en formato normalizado"),
+    usuario_activo: Usuario = Depends(obtener_usuario_actual_activo)
+):
     """Obtener un ejemplar por su ID"""
-    return await EjemplarService.obtener_ejemplar(id, db)
+    return await EjemplarService.obtener_ejemplar_por_id(id, db, normalizado)
 
 @ejemplar_router.put("/{id}", response_model=EjemplarView)
 async def actualizar_ejemplar(
@@ -71,7 +82,7 @@ async def actualizar_estado_ejemplar(
     """Actualizar el estado de un ejemplar"""
     return await EjemplarService.actualizar_estado_ejemplar(id, estado_update, db)
 
-@ejemplar_router.delete("/{id}", response_model=dict)
+@ejemplar_router.delete("/{id}", response_model=GenericMessage)
 async def eliminar_ejemplar(
     id: int,
     db: AsyncSession = Depends(get_session),
@@ -80,11 +91,3 @@ async def eliminar_ejemplar(
     """Eliminar un ejemplar por su ID"""
     return await EjemplarService.eliminar_ejemplar(id, db)
 
-@ejemplar_router.get("/codigo/{codigo_interno}", response_model=EjemplarView)
-async def obtener_ejemplar_por_codigo(
-    codigo_interno: str,
-    db: AsyncSession = Depends(get_session),
-    usuario_activo: Usuario = Depends(obtener_usuario_actual_activo)
-):
-    """Obtener un ejemplar por su código interno"""
-    return await EjemplarService.obtener_ejemplar_por_codigo(codigo_interno, db)

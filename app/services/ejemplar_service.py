@@ -116,7 +116,15 @@ class EjemplarService:
             if not ejemplar:
                 raise HTTPException(status_code=404, detail="Ejemplar no encontrado")
             return EjemplarReaderNormalized.from_model(ejemplar)
-        result = await db.execute(select(Ejemplar).where(Ejemplar.id == ejemplar_id))
+        result = await db.execute(
+                select(Ejemplar)
+                .options(
+                    selectinload(Ejemplar.libro),
+                    selectinload(Ejemplar.estado)
+                )
+                .where(Ejemplar.id == ejemplar_id)
+            )
+
         ejemplar = result.scalar()
         if not ejemplar:
             raise HTTPException(status_code=404, detail="Ejemplar no encontrado")
@@ -158,14 +166,19 @@ class EjemplarService:
     
     async def obtener_ejemplar_por_codigo(
         codigo_interno: str, db: AsyncSession
-    ) -> EjemplarView:
+    ) -> EjemplarReaderNormalized:
         """Obtener un ejemplar por su código interno."""
         result = await db.execute(
-            select(Ejemplar).where(Ejemplar.codigo_interno == codigo_interno)
+            select(Ejemplar)
+            .options(
+                selectinload(Ejemplar.libro),
+                selectinload(Ejemplar.estado)
+            )
+            .where(Ejemplar.codigo_interno == codigo_interno)
         )
         ejemplar = result.scalar_one_or_none()
 
         if not ejemplar:
             raise HTTPException(status_code=404, detail="Ejemplar no encontrado")
 
-        return EjemplarView.model_validate(ejemplar)
+        return EjemplarReaderNormalized.from_model(ejemplar)

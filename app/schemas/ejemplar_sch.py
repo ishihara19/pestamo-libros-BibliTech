@@ -32,7 +32,7 @@ class EjemplarView(EjemplarBase):
         instance = super().model_validate(obj)
         # Solo convertir para mostrar
         instance.creado_en = to_localtime(instance.creado_en)
-        instance.actualizado_en = to_localtime(instance.actualizado_en)
+        instance.actualizado_en = to_localtime(instance.actualizado_en) if instance.actualizado_en else None
         return instance
 
 class EjemplarReaderNormalized(BaseModel):
