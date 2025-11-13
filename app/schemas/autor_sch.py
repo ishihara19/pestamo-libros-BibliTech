@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 from ..utils.tiempo_tz import to_localtime
 from ..utils.utils import normalizar_nombre_propio
@@ -7,7 +7,7 @@ from ..utils.utils import normalizar_nombre_propio
 class AutorBase(BaseModel):
     nombre: str = Field(..., min_length=2, max_length=50)
     apellido: str = Field(..., min_length=2, max_length=50)
-    fecha_nacimiento: datetime
+    fecha_nacimiento: date
     nacionalidad: str = Field(..., min_length=2, max_length=50)
     
     @field_validator("nombre", "apellido")
