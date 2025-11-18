@@ -13,6 +13,7 @@ from ..schemas.usuario_sch import (
     UsuarioVerificarToken,
     UsuarioMensaje,
     UsuarioReadNormalized,
+    UsuarioUpdateAdmin,
 )
 from ..services.usuario_service import UsuarioService
 from ..dependencies.auth import (
@@ -92,7 +93,20 @@ async def actualizar_perfil_usuario(
         id, usuario_update, db, ip, host, username
     )
 
-
+@usuario_router.put("/{id}/admin", response_model=UsuarioReadNormalized)
+async def actualizar_usuarios_por_admin(
+    id: int,
+    usuario_update: UsuarioUpdateAdmin,
+    db: AsyncSession = Depends(get_session),
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador),
+):
+    """Actualizar un usuario existente por un administrador"""
+    ip = usuario_admin.ip
+    host = usuario_admin.host
+    username = usuario_admin.username
+    return await UsuarioService.actualizar_usuarios_por_admin(
+        id, usuario_update, db, ip, host, username
+    )
 @usuario_router.put("/{id}/contrasena", response_model=UsuarioMensaje)
 async def actualizar_contrasena_usuario(
     id: int,

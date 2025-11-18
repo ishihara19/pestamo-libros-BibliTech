@@ -32,7 +32,8 @@ class Usuario(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    # 👇 Relaciones nuevas
+    # Relaciones
     rol = relationship("Rol", back_populates="usuarios")
     tipo_documento = relationship("TipoDocumento", back_populates="usuarios")
     estado = relationship("Estado", back_populates="usuarios")
+    prestamo = relationship("Pestamo", back_populates="usuario")
