@@ -1,5 +1,5 @@
 import re
-from datetime import date
+from datetime import date, timedelta
 import magic
 from PIL import Image
 import io
@@ -182,3 +182,75 @@ async def generar_codigo_unico(libro_id: int, session: AsyncSession) -> str:
 
     # Generar el nuevo código
     return f"L{libro_id:04d}-E{siguiente:03d}"
+
+async def generar_fecha_devolucion_prevista(
+    fecha_solicitud: date, dias_prestamo: int = 14
+) -> date:
+    """
+    Genera la fecha prevista de devolución sumando días calendario a la fecha de solicitud.
+    Valida que la cantidad de días no sea menor a 1 y permite fines de semana.
+    """
+
+    # Validación: el número de días no puede ser menor que 1
+    if dias_prestamo < 1:
+        raise ValueError("El número de días de préstamo no puede ser menor a 1.")
+
+    
+    fecha_devolucion = fecha_solicitud + timedelta(days=dias_prestamo)
+
+    return fecha_devolucion
+
+async def ejemplar_disponible(ejemplar_id: int, session: AsyncSession) -> bool:
+    """
+    Verifica si un ejemplar está disponible para préstamo.
+    Retorna True si está disponible, False si está prestado.
+    """
+    stmt = select(Ejemplar).where(Ejemplar.id == ejemplar_id)
+    result = await session.execute(stmt)
+    ejemplar = result.scalar_one_or_none()
+
+    if not ejemplar:
+        raise ValueError("El ejemplar no existe.")
+
+    return ejemplar.estado_id == 1
+
+async def ejemplar_disponible_info(libro_id: int, session: AsyncSession) -> dict | None:
+    """
+    Retorna:
+    - id del ejemplar
+    - codigo_interno del ejemplar
+    Si no hay ejemplares disponibles, retorna None.
+    """
+    stmt = (
+        select(Ejemplar.id, Ejemplar.codigo_interno)
+        .where(Ejemplar.libro_id == libro_id)
+        .where(Ejemplar.estado_id == settings.DISPONIBILIDAD_EJEMPLAR_DISPONIBLE_ID)
+        .limit(1)
+    )
+
+    result = await session.execute(stmt)
+    row = result.one_or_none()    
+
+    if not row:
+        return None
+
+    return {
+        "id": row.id,
+        "codigo_interno": row.codigo_interno,
+    }
+
+
+async def total_ejemplares_disponibles_por_libro(libro_id: int, session: AsyncSession) -> int:
+    """
+    Retorna la cantidad total de ejemplares disponibles (estado_id = 1)
+    para un libro dado.
+    """
+    stmt = (
+        select(func.count(Ejemplar.id))
+        .where(Ejemplar.libro_id == libro_id)
+        .where(Ejemplar.estado_id == settings.DISPONIBILIDAD_EJEMPLAR_DISPONIBLE_ID)
+    )
+
+    result = await session.execute(stmt)
+    return result.scalar() or 0
+
