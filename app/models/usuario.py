@@ -36,4 +36,4 @@ class Usuario(Base):
     rol = relationship("Rol", back_populates="usuarios")
     tipo_documento = relationship("TipoDocumento", back_populates="usuarios")
     estado = relationship("Estado", back_populates="usuarios")
-    prestamo = relationship("Pestamo", back_populates="usuario")
+    #prestamo = relationship("Prestamo", back_populates="usuario")
