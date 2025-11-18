@@ -13,7 +13,7 @@ from ..schemas.ejemplar_sch import (
 )
 from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
 from ..schemas.generic_sch import GenericMessage
-from ..utils.utils import generar_codigo_unico
+from ..utils.utils import generar_codigo_unico,total_ejemplares_disponibles_por_libro
 
 class EjemplarService:
     @staticmethod
@@ -164,6 +164,7 @@ class EjemplarService:
 
         return GenericMessage(message="Ejemplar eliminado correctamente")
     
+    @staticmethod
     async def obtener_ejemplar_por_codigo(
         codigo_interno: str, db: AsyncSession
     ) -> EjemplarReaderNormalized:
@@ -182,3 +183,9 @@ class EjemplarService:
             raise HTTPException(status_code=404, detail="Ejemplar no encontrado")
 
         return EjemplarReaderNormalized.from_model(ejemplar)
+    
+    @staticmethod
+    async def obtener_total_ejemplares_disponibles_por_libro(libro_id: int, db: AsyncSession) -> int:
+        """Obtener el total de ejemplares disponibles para un libro dado."""
+        total= await total_ejemplares_disponibles_por_libro(libro_id, db)
+        return total

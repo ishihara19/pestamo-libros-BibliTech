@@ -15,6 +15,7 @@ from .routes.categoria_routes import categoria_router
 from .routes.libro_routes import libro_router
 from .routes.auditoria_router import auditoria_router
 from .routes.ejemplar_routers import ejemplar_router
+from .routes.prestamo_routes import prestamo_router
 from .utils.utils import normalizar_nombre_propio
 
 
@@ -44,6 +45,7 @@ app.include_router(autor_router, prefix=settings.PREFIX_API_VERSION)
 app.include_router(categoria_router, prefix=settings.PREFIX_API_VERSION)
 app.include_router(libro_router, prefix=settings.PREFIX_API_VERSION)
 app.include_router(ejemplar_router, prefix=settings.PREFIX_API_VERSION)
+app.include_router(prestamo_router, prefix=settings.PREFIX_API_VERSION)
 app.include_router(auditoria_router, prefix=settings.PREFIX_API_VERSION)
 
 class rootResponse(BaseModel):
