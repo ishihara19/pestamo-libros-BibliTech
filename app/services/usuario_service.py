@@ -15,6 +15,7 @@ from ..schemas.usuario_sch import (
     UsuarioVerificarToken,
     UsuarioMensaje,
     UsuarioReadNormalized,
+    UsuarioUpdateAdmin,
 )
 from ..core.security import hash_password, verify_password
 from ..utils.generar_token import generar_token
@@ -146,6 +147,41 @@ class UsuarioService:
             return UsuarioReadNormalized.from_model(usuario)
         return UsuarioView.model_validate(usuario)
 
+    @staticmethod
+    async def actualizar_usuarios_por_admin(
+        id: int,
+        usuario_update: UsuarioUpdateAdmin,
+        db: AsyncSession,
+        ip: str,
+        host: str,
+        username: str,
+    ) -> UsuarioReadNormalized:
+        """Actualizar un usuario por un administrador."""
+
+        try:
+            await set_app_context(db, username, ip, host, "actualizar_usuarios_por_admin")
+            result = await db.execute(select(Usuario).where(Usuario.id == id))
+            usuario = result.scalar_one_or_none()
+
+            if not usuario:
+                raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+            for var, value in usuario_update.model_dump(exclude_unset=True).items():
+                setattr(usuario, var, value)
+
+            db.add(usuario)
+            await db.commit()
+            await db.refresh(usuario)
+
+            return UsuarioReadNormalized.from_model(usuario)
+        except Exception as e:
+            await db.rollback()
+            raise 
+
+        finally:
+
+            await clear_app_context(db)
+    
     @staticmethod
     async def actualizar_perfil_usuario(
         id: int,

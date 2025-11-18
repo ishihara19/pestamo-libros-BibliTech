@@ -22,3 +22,4 @@ class Ejemplar(Base):
     # Relaciones
     libro = relationship("Libro", back_populates="ejemplar")
     estado = relationship("Estado", back_populates="ejemplar")
+    prestamo = relationship("Pestamo", back_populates="ejemplar")
