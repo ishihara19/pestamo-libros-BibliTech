@@ -56,7 +56,7 @@ async def listar_prestamos(
     normalizado: bool = Query(
         False, description="Retornar datos en formato normalizado"
     ),
-    # usuario: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
+    usuario: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
 ):
     """
     Listar todos los préstamos.
