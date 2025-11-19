@@ -1,8 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, update
 from fastapi import HTTPException
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 from sqlalchemy.orm import selectinload
+from typing import Optional
 
 
 from ..models.prestamo import Prestamo
@@ -11,7 +12,7 @@ from ..models.ejemplar import Ejemplar
 from ..core.db.postgre import set_app_context, clear_app_context
 from ..utils.utils import generar_fecha_devolucion_prevista, ejemplar_disponible_info
 from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
-from ..schemas.prestamo_sch import HacerPrestamo, PrestamoViewBibliotecario, PrestamoViewNormalizedBibliotecario, PrestamoViewNormalizedLector
+from ..schemas.prestamo_sch import HacerPrestamo, PrestamoViewBibliotecario, PrestamoViewNormalizedBibliotecario, PrestamoViewNormalizedLector, ConfirmarEntregaPrestamo
 from ..schemas.generic_sch import GenericMessage
 from ..core.config import settings
 
@@ -196,3 +197,103 @@ class PrestamoService:
             for prestamo in prestamos
         ]
 
+    @staticmethod
+    async def confirmar_entrega_por_documento(
+        db: AsyncSession,
+        datos_prestamo: ConfirmarEntregaPrestamo,
+        ip: str,
+        host: str,
+        username: str,    
+    ) -> GenericMessage:
+        """Confirmar la entrega de un préstamo por número de documento y código interno del ejemplar"""
+        try:
+            await set_app_context(db, username, ip, host, "confirmar_entrega_por_documento")
+            # Buscar el préstamo correspondiente
+            query = (
+                select(Prestamo)
+                .options(selectinload(Prestamo.ejemplar))
+                .join(Prestamo.usuarios)
+                .join(Prestamo.ejemplar)
+                .where(
+                    Usuario.documento == datos_prestamo.numero_documento,
+                    Ejemplar.codigo_interno == datos_prestamo.ejemplar_codigo_interno,
+                    Ejemplar.estado_id == settings.RESERVADO_EJEMPLAR_ID
+                )
+            )
+            
+            # Ejecutar la consulta
+            result = await db.execute(query)
+            prestamo = result.scalar_one_or_none()
+            
+            # Validar existencia del préstamo
+            if not prestamo:
+                return GenericMessage(message="No existe un préstamo reservado para este usuario y ejemplar.")
+
+            # Actualizar el préstamo y el estado del ejemplar
+            prestamo.fecha_entrega = date.today()       
+            prestamo.ejemplar.estado_id = settings.PRESTADO_EJEMPLAR_NO_DISPONIBLE_ID
+    
+            
+            await db.commit()
+            await db.refresh(prestamo)
+
+            return GenericMessage(message="Entrega confirmada. El ejemplar fue marcado como prestado.")
+        
+        except Exception as e:            
+            await db.rollback()
+            raise
+
+        finally:
+
+            await clear_app_context(db)    
+            
+            
+    @staticmethod
+    async def registrar_devolucion(
+        db: AsyncSession,
+        codigo_interno: str,
+        ip: str,
+        host: str,
+        username: str,
+    ) -> GenericMessage:
+
+        try:
+            await set_app_context(db, username, ip, host, "registrar_devolucion")
+
+            # Buscar el préstamo activo por código interno
+            query = (
+                select(Prestamo)
+                .options(
+                    selectinload(Prestamo.ejemplar),  
+                    selectinload(Prestamo.usuarios)
+                )
+                .join(Prestamo.ejemplar)
+                .where(
+                    Ejemplar.codigo_interno == codigo_interno,
+                    Prestamo.fecha_devuelto.is_(None),  # préstamo aún activo
+                    Ejemplar.estado_id == settings.PRESTADO_EJEMPLAR_NO_DISPONIBLE_ID
+                )
+            )
+
+            result = await db.execute(query)
+            prestamo = result.scalar_one_or_none()
+
+            if not prestamo:
+                return GenericMessage(message="No existe un préstamo activo para este ejemplar.")
+
+            # Cambiar estados
+            prestamo.fecha_devuelto = datetime.now()
+            prestamo.ejemplar.estado_id = settings.DISPONIBILIDAD_EJEMPLAR_DISPONIBLE_ID
+
+            await db.commit()
+            await db.refresh(prestamo)
+
+            return GenericMessage(message="Devolución registrada correctamente.")
+        
+        except Exception as e:
+            await db.rollback()
+            raise
+
+        finally:
+            await clear_app_context(db)
+            

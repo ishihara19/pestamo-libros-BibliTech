@@ -6,6 +6,7 @@ from ..core.db.postgre import get_session
 from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
 from ..schemas.prestamo_sch import (
     HacerPrestamo,
+    ConfirmarEntregaPrestamo,
 )  # , PrestamoView, PrestamoReadNormalized
 from ..schemas.generic_sch import GenericMessage
 from ..services.prestamo_service import (
@@ -90,3 +91,41 @@ async def listar_prestamos_lector(
         pagination = PaginationParams(page=page, page_size=page_size)
 
     return await PrestamoService.listar_prestamos_lector(db, usuario.id, pagination)
+
+@prestamo_router.post(
+    "/confirmar-entrega",
+    response_model=GenericMessage,
+    status_code=200,
+)
+async def confirmar_entrega_prestamo(
+    datos_prestamo: ConfirmarEntregaPrestamo,
+    db: AsyncSession = Depends(get_session),
+    usuario: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario),
+) -> GenericMessage:
+    """Confirmar la entrega de un préstamo por número de documento y código interno del ejemplar"""
+    ip = usuario.ip
+    host = usuario.host
+    username = usuario.username
+    return await PrestamoService.confirmar_entrega_por_documento(
+        db, datos_prestamo, ip, host, username
+    )
+    
+
+@prestamo_router.post(
+    "/{codigo_interno}/confirmar-devolucion", 
+    response_model=GenericMessage,
+    status_code=200,
+)
+async def registrar_devolucion(
+    codigo_interno: str,
+    db: AsyncSession = Depends(get_session),
+    usuario: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario),
+) -> GenericMessage:
+    """Confirmar la entrega de un préstamo por su ID"""
+    ip = usuario.ip
+    host = usuario.host
+    username = usuario.username
+    return await PrestamoService.registrar_devolucion(
+        db, codigo_interno, ip, host, username
+    )
+    

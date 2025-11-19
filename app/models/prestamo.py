@@ -3,6 +3,8 @@ from sqlalchemy.orm import relationship
 from ..core.db.postgre import Base
 from sqlalchemy.sql import func
 
+from .ejemplar import Ejemplar
+from .usuario import Usuario
 
 class Prestamo(Base):
     __tablename__ = "prestamo"
@@ -13,7 +15,7 @@ class Prestamo(Base):
     fecha_solicitud = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     fecha_entrega = Column(Date, nullable=True, index=True)
     fecha_prevista_devolucion = Column(Date, nullable=False, index=True)
-    fecha_devuelto = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    fecha_devuelto = Column(DateTime(timezone=True), nullable=True)
     creado_en = Column(DateTime(timezone=True), server_default=func.now())
     actualizado_en = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
