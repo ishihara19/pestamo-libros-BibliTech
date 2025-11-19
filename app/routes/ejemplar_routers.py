@@ -11,7 +11,7 @@ from ..schemas.ejemplar_sch import (
 from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
 from ..services.ejemplar_service import EjemplarService
 from ..core.db.postgre import get_session
-from ..dependencies.auth import obtener_usuario_actual_administrador, obtener_usuario_actual_activo
+from ..dependencies.auth import obtener_usuario_actual_administrador_o_bibliotecario, obtener_usuario_actual_activo
 from ..models.usuario import Usuario
 from ..schemas.generic_sch import GenericMessage
 
@@ -21,7 +21,7 @@ ejemplar_router = APIRouter(prefix="/ejemplares", tags=["Ejemplares"])
 async def crear_ejemplar(
     ejemplar: EjemplarCreate,
     db: AsyncSession = Depends(get_session),
-    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
 ):
     """Crear un nuevo ejemplar"""
     return await EjemplarService.create_ejemplar(ejemplar, db)
@@ -31,7 +31,8 @@ async def listar_ejemplares(
     db: AsyncSession = Depends(get_session),
     page: int | None = Query(None, ge=1, description="Número de página"),
     page_size: int | None = Query(None, ge=1, le=100, description="Items por página"),
-    normalizado: bool = Query(False, description="Retornar datos en formato normalizado")
+    normalizado: bool = Query(False, description="Retornar datos en formato normalizado"),
+    usuario_activo: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
 ):
     """
     Listar todos los ejemplares.
@@ -47,7 +48,7 @@ async def listar_ejemplares(
 async def obtener_ejemplar_por_codigo(
     codigo_interno: str,
     db: AsyncSession = Depends(get_session),
-    usuario_activo: Usuario = Depends(obtener_usuario_actual_activo)
+    usuario_activo: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
 ):
     """Obtener un ejemplar por su código interno"""
     return await EjemplarService.obtener_ejemplar_por_codigo(codigo_interno, db)
@@ -57,7 +58,7 @@ async def obtener_ejemplar_por_id(
     id: int,
     db: AsyncSession = Depends(get_session),
     normalizado: bool = Query(False, description="Retornar datos en formato normalizado"),
-    usuario_activo: Usuario = Depends(obtener_usuario_actual_activo)
+    usuario_activo: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
 ):
     """Obtener un ejemplar por su ID"""
     return await EjemplarService.obtener_ejemplar_por_id(id, db, normalizado)
@@ -67,7 +68,7 @@ async def actualizar_ejemplar(
     id: int,
     ejemplar_update: EjemplarUpdate,
     db: AsyncSession = Depends(get_session),
-    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
 ):
     """Actualizar un ejemplar existente"""
     return await EjemplarService.actualizar_ejemplar(id, ejemplar_update, db)
@@ -77,7 +78,7 @@ async def actualizar_estado_ejemplar(
     id: int,
     estado_update: EjemplarUpdateEstado,
     db: AsyncSession = Depends(get_session),
-    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
 ):
     """Actualizar el estado de un ejemplar"""
     return await EjemplarService.actualizar_estado_ejemplar(id, estado_update, db)
@@ -86,7 +87,7 @@ async def actualizar_estado_ejemplar(
 async def eliminar_ejemplar(
     id: int,
     db: AsyncSession = Depends(get_session),
-    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
 ):
     """Eliminar un ejemplar por su ID"""
     return await EjemplarService.eliminar_ejemplar(id, db)

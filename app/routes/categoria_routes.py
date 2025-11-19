@@ -6,7 +6,7 @@ from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
 from ..services.categoria_service import CategoriaService
 from ..schemas.generic_sch import GenericMessage
 from ..core.db.postgre import get_session
-from ..dependencies.auth import obtener_usuario_actual_administrador, obtener_usuario_actual_activo
+from ..dependencies.auth import obtener_usuario_actual_administrador_o_bibliotecario, obtener_usuario_actual_activo
 from ..models.usuario import Usuario
 
 categoria_router = APIRouter(prefix="/categorias", tags=["Categorías"])
@@ -15,7 +15,7 @@ categoria_router = APIRouter(prefix="/categorias", tags=["Categorías"])
 async def crear_categoria(
     categoria: CategoriaCreate,
     db: AsyncSession = Depends(get_session),
-    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
 ):
     """Crear una nueva categoría"""
     return await CategoriaService.create_categoria(categoria, db)
@@ -41,7 +41,7 @@ async def listar_categorias(
 async def obtener_categoria_por_id(
     id: int,
     db: AsyncSession = Depends(get_session),
-    usuario_activo: Usuario = Depends(obtener_usuario_actual_activo)
+    usuario_activo: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
 ):
     """Obtener una categoría por su ID"""
     return await CategoriaService.obtener_categoria_por_id(id, db)
@@ -51,7 +51,7 @@ async def actualizar_categoria(
     id: int,
     categoria: CategoriaUpdate,
     db: AsyncSession = Depends(get_session),
-    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
 ):
     """Actualizar una categoría por su ID"""
     return await CategoriaService.actualizar_categoria(id, categoria, db)
@@ -60,7 +60,7 @@ async def actualizar_categoria(
 async def eliminar_categoria(
     id: int,
     db: AsyncSession = Depends(get_session),
-    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
 ):
     """Eliminar una categoría por su ID"""
     return await CategoriaService.eliminar_categoria(id, db)

@@ -9,7 +9,7 @@ from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
 from ..services.libro_service import LibroService
 from ..schemas.generic_sch import GenericMessage
 from ..core.db.postgre import get_session
-from ..dependencies.auth import obtener_usuario_actual_administrador, obtener_usuario_actual_activo
+from ..dependencies.auth import obtener_usuario_actual_administrador_o_bibliotecario, obtener_usuario_actual_activo
 from ..models.usuario import Usuario
 from ..core.config import settings
 from ..core.s3_client import S3Client
@@ -30,7 +30,7 @@ async def crear_libro(
     libro: str = Form(..., description="Datos del libro en formato JSON"),
     db: AsyncSession = Depends(get_session),
     file: UploadFile = File(..., description="Imagen del libro en formato JPEG o PNG"),
-    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
 ):
     """
     Ejemplo del campo **libro**:
@@ -111,7 +111,7 @@ async def actualizar_libro(
     id: int,
     libro: LibroUpdate,
     db: AsyncSession = Depends(get_session),
-    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
 ):
     """Actualizar un libro por su ID"""
     return await LibroService.actualizar_libro(id, libro, db)
@@ -121,7 +121,7 @@ async def actualizar_imagen_libro(
     id: int,    
     file: UploadFile = File(..., description="Nueva imagen del libro en formato JPEG o PNG"),
     db: AsyncSession = Depends(get_session),
-    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
 ):
     """Actualizar la imagen de un libro por su ID"""
     
@@ -153,7 +153,7 @@ async def actualizar_imagen_libro(
 async def eliminar_libro(
     id: int,
     db: AsyncSession = Depends(get_session),
-    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
 ):
     """Eliminar un libro por su ID"""
     return await LibroService.eliminar_libro(id, db)

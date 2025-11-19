@@ -40,7 +40,7 @@ async def listar_tipos_documento(
 async def obtener_tipo_documento(
     id: int,
     db: AsyncSession = Depends(get_session),
-    usuario_actual: Usuario = Depends(obtener_usuario_actual_activo)
+    usuario_actual: Usuario = Depends(obtener_usuario_actual_administrador)
 ):
     """Obtener un tipo de documento por su ID"""
     tipo_documento =  await TipoDocumentoService.obtener_tipo_documento(id, db)

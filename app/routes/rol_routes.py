@@ -24,7 +24,8 @@ async def crear_rol(
 async def listar_roles(
     db: AsyncSession = Depends(get_session),
     page: int | None = Query(None, ge=1, description="Número de página"),
-    page_size: int | None = Query(None, ge=1, le=100, description="Items por página")
+    page_size: int | None = Query(None, ge=1, le=100, description="Items por página"),
+    usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador)
 ):
     """
     Listar todos los roles.
@@ -40,7 +41,7 @@ async def listar_roles(
 async def obtener_rol(
     id: int,
     db: AsyncSession = Depends(get_session),
-    usuario_actual: Usuario = Depends(obtener_usuario_actual_activo)
+    usuario_actual: Usuario = Depends(obtener_usuario_actual_administrador)
 ):
     """Obtener un rol por su ID"""
     rol = await RolService.obtener_role(id, db)
