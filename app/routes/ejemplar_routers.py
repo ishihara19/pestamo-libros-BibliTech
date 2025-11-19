@@ -72,7 +72,7 @@ async def actualizar_ejemplar(
     """Actualizar un ejemplar existente"""
     return await EjemplarService.actualizar_ejemplar(id, ejemplar_update, db)
 
-@ejemplar_router.patch("/{id}/estado", response_model=EjemplarView)
+@ejemplar_router.patch("/{id}/estado", response_model=GenericMessage)
 async def actualizar_estado_ejemplar(
     id: int,
     estado_update: EjemplarUpdateEstado,

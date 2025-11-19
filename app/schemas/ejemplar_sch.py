@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime, date
 from typing import Optional
+from pydantic import field_validator
 from ..utils.tiempo_tz import to_localtime
 
 class EjemplarBase(BaseModel):
@@ -45,7 +46,11 @@ class EjemplarReaderNormalized(BaseModel):
     actualizado_en: Optional[datetime]
 
     model_config = ConfigDict(from_attributes=True)
-
+    @field_validator( "creado_en", "actualizado_en", mode="before")
+    def convert_to_localtime(cls, value):
+        if value and isinstance(value, datetime):
+            return to_localtime(value)
+        return value
     @classmethod
     def from_model(cls, ejemplar):
         return cls(
@@ -60,5 +65,5 @@ class EjemplarReaderNormalized(BaseModel):
 
 class EjemplarUpdateEstado(BaseModel):
     estado_id: int
-    actualizado_en: Optional[datetime]
+    
                         

@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from fastapi import HTTPException
 from sqlalchemy.orm import selectinload
+from datetime import datetime
 
 from ..models.ejemplar import Ejemplar
 from ..schemas.ejemplar_sch import (
@@ -13,7 +14,8 @@ from ..schemas.ejemplar_sch import (
 )
 from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
 from ..schemas.generic_sch import GenericMessage
-from ..utils.utils import generar_codigo_unico
+from ..utils.utils import generar_codigo_unico,total_ejemplares_disponibles_por_libro
+from ..core.config import settings
 
 class EjemplarService:
     @staticmethod
@@ -88,17 +90,28 @@ class EjemplarService:
         """Actualizar el estado de un ejemplar."""
         query = select(Ejemplar).where(Ejemplar.id == ejemplar_id)
         result = await db.execute(query)
+        
         ejemplar = result.scalar_one_or_none()
+        
 
         if not ejemplar:
             raise HTTPException(status_code=404, detail="Ejemplar no encontrado")
+        
+        if estado_update.estado_id not in [
+            settings.DISPONIBILIDAD_EJEMPLAR_DISPONIBLE_ID,
+            settings.PRESTADO_EJEMPLAR_NO_DISPONIBLE_ID,
+            settings.RESERVADO_EJEMPLAR_ID
+            ]: 
+            raise HTTPException(status_code=400, detail="El estado no es válido para actualizar el ejemplar") 
+              
+        if ejemplar.estado_id == estado_update.estado_id:
+            return GenericMessage(message="El ejemplar ya tiene el estado especificado")
 
         ejemplar.estado_id = estado_update.estado_id
-        if estado_update.actualizado_en:
-            ejemplar.actualizado_en = estado_update.actualizado_en
+        ejemplar.actualizado_en = datetime.now()
 
         db.add(ejemplar)
-        await db.commit()
+        await db.commit()        
         return GenericMessage(message="Estado del ejemplar actualizado correctamente")
     
     @staticmethod
@@ -164,6 +177,7 @@ class EjemplarService:
 
         return GenericMessage(message="Ejemplar eliminado correctamente")
     
+    @staticmethod
     async def obtener_ejemplar_por_codigo(
         codigo_interno: str, db: AsyncSession
     ) -> EjemplarReaderNormalized:
@@ -182,3 +196,9 @@ class EjemplarService:
             raise HTTPException(status_code=404, detail="Ejemplar no encontrado")
 
         return EjemplarReaderNormalized.from_model(ejemplar)
+    
+    @staticmethod
+    async def obtener_total_ejemplares_disponibles_por_libro(libro_id: int, db: AsyncSession) -> int:
+        """Obtener el total de ejemplares disponibles para un libro dado."""
+        total= await total_ejemplares_disponibles_por_libro(libro_id, db)
+        return total
