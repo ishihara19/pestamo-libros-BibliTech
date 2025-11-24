@@ -5,6 +5,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import case
 
 from ..models.libro import Libro
+from ..models.autor import Autor
 from ..models.ejemplar import Ejemplar
 from ..schemas.libro_sch import LibroCreate, LibroUpdate, LibroView, LibroViewNormalized,  LibroURLUpdate
 from ..core.config import settings
@@ -15,7 +16,18 @@ class LibroService:
     @staticmethod
     async def create_libro(libro: LibroCreate, db: AsyncSession, imagen_url: str) -> LibroView:
         """Crear un nuevo libro en la base de datos."""
-        nuevo_libro = Libro(**libro.model_dump(), imagen_url=imagen_url)
+        data = libro.model_dump()
+        autores_ids = data.pop("autores_ids", None)
+        nuevo_libro = Libro(**data, imagen_url=imagen_url)
+        # vincular autores si se proporcionan ids
+        if autores_ids:
+            result = await db.execute(select(Autor).where(Autor.id.in_(autores_ids)))
+            autores = result.scalars().all()
+            found_ids = {a.id for a in autores}
+            missing = set(autores_ids) - found_ids
+            if missing:
+                raise HTTPException(status_code=400, detail=f"Autores no encontrados: {sorted(list(missing))}")
+            nuevo_libro.autores = autores
         db.add(nuevo_libro)
         await db.commit()
         await db.refresh(nuevo_libro)
@@ -257,8 +269,21 @@ class LibroService:
         if not libro:
             raise HTTPException(status_code=404, detail="Libro no encontrado")
 
-        for var, value in libro_update.model_dump(exclude_unset=True).items():
+        update_data = libro_update.model_dump(exclude_unset=True)
+        # manejar autores si vienen en la actualización
+        autores_ids = update_data.pop("autores_ids", None)
+        for var, value in update_data.items():
             setattr(libro, var, value)
+
+        if autores_ids is not None:
+            # reemplazar la lista de autores por la nueva
+            result = await db.execute(select(Autor).where(Autor.id.in_(autores_ids)))
+            autores = result.scalars().all()
+            found_ids = {a.id for a in autores}
+            missing = set(autores_ids) - found_ids
+            if missing:
+                raise HTTPException(status_code=400, detail=f"Autores no encontrados: {sorted(list(missing))}")
+            libro.autores = autores
 
         db.add(libro)
         await db.commit()

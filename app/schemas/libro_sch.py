@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime, date
 from typing import Optional
+from typing import List
 from ..utils.tiempo_tz import to_localtime
 from .autor_sch import AutorSimpleView
 
@@ -12,7 +13,7 @@ class LibroBase(BaseModel):
     fecha_publicacion: date = Field(...)
 
 class LibroCreate(LibroBase):
-    pass
+    autores_ids: Optional[List[int]] = None
 
 class LibroUpdate(BaseModel):
     titulo: Optional[str] = Field(None, max_length=100)
@@ -21,6 +22,7 @@ class LibroUpdate(BaseModel):
     editorial: Optional[str] = Field(None, max_length=100)
     fecha_publicacion: Optional[date] = Field(None)
     imagen_url: Optional[str] = Field(None)
+    autores_ids: Optional[List[int]] = None
     
 class LibroView(LibroBase):
     id: int

@@ -40,7 +40,8 @@ async def crear_libro(
       "descripcion": "string",
       "categoria_id": 0,
       "editorial": "string",
-      "fecha_publicacion": "1935-12-30"
+      "fecha_publicacion": "1935-12-30",
+      ""autores_ids": [1]
     }
     ```
     """
