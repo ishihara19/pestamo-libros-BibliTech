@@ -160,7 +160,11 @@ class UsuarioService:
 
         try:
             await set_app_context(db, username, ip, host, "actualizar_usuarios_por_admin")
-            result = await db.execute(select(Usuario).where(Usuario.id == id))
+            result = await db.execute(select(Usuario).where(Usuario.id == id).options(
+                    selectinload(Usuario.rol),
+                    selectinload(Usuario.estado),
+                    selectinload(Usuario.tipo_documento),
+                ))
             usuario = result.scalar_one_or_none()
 
             if not usuario:
