@@ -25,9 +25,9 @@ from ..models.usuario import Usuario
 usuario_router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
 
-@usuario_router.post("", response_model=UsuarioView, status_code=201)
+@usuario_router.post("", response_model=UsuarioReadNormalized, status_code=201)
 async def crear_usuario(
-    usuario: UsuarioCreate,
+    usuario: UsuarioUpdateAdmin,
     db: AsyncSession = Depends(get_session),
     usuario_admin: Usuario = Depends(obtener_usuario_actual_administrador),
 ):
@@ -159,7 +159,7 @@ async def eliminar_usuario_suave(
     ip = usuario_admin.ip
     host = usuario_admin.host
     username = usuario_admin.username
-    return await UsuarioService.eliminar_usuario_suave(id, db, ip, host, username)
+    return await UsuarioService.eliminacion_suave_usuario(id, db, ip, host, username)
 
 
 @usuario_router.delete("/{id}", status_code=204)
