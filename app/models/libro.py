@@ -1,9 +1,11 @@
-from sqlalchemy import Column, Integer, String, text, DateTime,ForeignKey,Text
+from sqlalchemy import Column, Integer, String, text, DateTime, ForeignKey, Text
+from sqlalchemy import Table, BigInteger
 from ..core.db.postgre import Base
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
 from .categoria import Categoria
+from .autor_libro import autor_libro
 
 class Libro(Base):
     __tablename__ = 'libro'
@@ -21,3 +23,5 @@ class Libro(Base):
     # Relaciones
     categoria = relationship("Categoria", back_populates="libros")
     ejemplar = relationship("Ejemplar", back_populates="libro")
+    # relación many-to-many con autores a través de la tabla autor_libro
+    autores = relationship("Autor", secondary=autor_libro, back_populates="libros")

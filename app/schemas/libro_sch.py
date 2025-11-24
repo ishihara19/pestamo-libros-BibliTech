@@ -2,6 +2,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime, date
 from typing import Optional
 from ..utils.tiempo_tz import to_localtime
+from .autor_sch import AutorSimpleView
 
 class LibroBase(BaseModel):
     titulo: str = Field(..., max_length=100)
@@ -26,6 +27,12 @@ class LibroView(LibroBase):
     creado_en: datetime
     actualizado_en: Optional[datetime]
     imagen_url: Optional[str] = Field(None)
+    autores: list[AutorSimpleView] = []
+    ejemplares_count: int = 0
+    ejemplares_disponibles: int = 0
+    ejemplares_reservados: int = 0
+    ejemplares_prestados: int = 0
+    ejemplares_danados: int = 0
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -47,6 +54,12 @@ class LibroViewNormalized(BaseModel):
     fecha_publicacion: Optional[date]
     actualizado_en: Optional[datetime]
     imagen_url: Optional[str]
+    autores: list[AutorSimpleView] = []
+    ejemplares_count: int = 0
+    ejemplares_disponibles: int = 0
+    ejemplares_reservados: int = 0
+    ejemplares_prestados: int = 0
+    ejemplares_danados: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -71,6 +84,12 @@ class LibroViewNormalized(BaseModel):
             imagen_url=libro.imagen_url,
             creado_en=libro.creado_en,
             actualizado_en=libro.actualizado_en,
+            autores=[AutorSimpleView.model_validate(a) for a in getattr(libro, "autores", [])],
+            ejemplares_count=len(getattr(libro, "ejemplar", []) or []),
+            ejemplares_disponibles=sum(1 for e in getattr(libro, "ejemplar", []) if getattr(e, "estado_id", None) == 3),
+            ejemplares_reservados=sum(1 for e in getattr(libro, "ejemplar", []) if getattr(e, "estado_id", None) == 4),
+            ejemplares_prestados=sum(1 for e in getattr(libro, "ejemplar", []) if getattr(e, "estado_id", None) == 5),
+            ejemplares_danados=sum(1 for e in getattr(libro, "ejemplar", []) if getattr(e, "estado_id", None) == 6),
         )
         
 

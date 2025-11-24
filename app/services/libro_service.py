@@ -2,9 +2,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from fastapi import HTTPException
 from sqlalchemy.orm import selectinload
+from sqlalchemy import case
 
 from ..models.libro import Libro
+from ..models.ejemplar import Ejemplar
 from ..schemas.libro_sch import LibroCreate, LibroUpdate, LibroView, LibroViewNormalized,  LibroURLUpdate
+from ..core.config import settings
 from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
 from ..schemas.generic_sch import GenericMessage
 
@@ -42,33 +45,139 @@ class LibroService:
                 # Obtener registros paginados
                 query = (
                     select(Libro)
-                    .options(selectinload(Libro.categoria))
+                    .options(
+                        selectinload(Libro.categoria),
+                        selectinload(Libro.autores),
+                    )
                     .offset(pagination.offset)
                     .limit(pagination.limit)
                 )
                 result = await db.execute(query)
                 libros = result.scalars().all()
 
-                items = [LibroViewNormalized.from_model(libro) for libro in libros]
+                # calcular counts por libro sin cargar los ejemplares completos
+                libro_ids = [l.id for l in libros]
+                counts_map = {}
+                if libro_ids:
+                    counts_stmt = (
+                        select(
+                            Ejemplar.libro_id,
+                            func.count(Ejemplar.id).label("total"),
+                            func.sum(case((Ejemplar.estado_id == settings.DISPONIBILIDAD_EJEMPLAR_DISPONIBLE_ID, 1), else_=0)).label("disponible"),
+                            func.sum(case((Ejemplar.estado_id == settings.RESERVADO_EJEMPLAR_ID, 1), else_=0)).label("reservado"),
+                            func.sum(case((Ejemplar.estado_id == settings.PRESTADO_EJEMPLAR_NO_DISPONIBLE_ID, 1), else_=0)).label("prestado"),
+                            func.sum(case((Ejemplar.estado_id == 6, 1), else_=0)).label("danado"),
+                        )
+                        .where(Ejemplar.libro_id.in_(libro_ids))
+                        .group_by(Ejemplar.libro_id)
+                    )
+                    counts_result = await db.execute(counts_stmt)
+                    counts_rows = counts_result.all()
+                    counts_map = {r.libro_id: r._asdict() for r in counts_rows}
+
+                items = []
+                for libro in libros:
+                    item = LibroViewNormalized.from_model(libro)
+                    c = counts_map.get(libro.id, {})
+                    item.ejemplares_count = int(c.get("total", 0))
+                    item.ejemplares_disponibles = int(c.get("disponible", 0))
+                    item.ejemplares_reservados = int(c.get("reservado", 0))
+                    item.ejemplares_prestados = int(c.get("prestado", 0))
+                    item.ejemplares_danados = int(c.get("danado", 0))
+                    items.append(item)
                 return PaginatedResponse.create(items, total, pagination)
             # Obtener registros paginados
-            query = select(Libro).offset(pagination.offset).limit(pagination.limit)
+            query = (
+                select(Libro)
+                .options(selectinload(Libro.autores), selectinload(Libro.ejemplar))
+                .offset(pagination.offset)
+                .limit(pagination.limit)
+            )
             result = await db.execute(query)
             libros = result.scalars().all()
 
-            items = [LibroView.model_validate(libro) for libro in libros]
+            # obtener conteos de ejemplares por libro en una sola consulta
+            libro_ids = [l.id for l in libros]
+            counts_stmt = (
+                select(
+                    Ejemplar.libro_id,
+                    func.count(Ejemplar.id).label("total"),
+                    func.sum(case((Ejemplar.estado_id == settings.DISPONIBILIDAD_EJEMPLAR_DISPONIBLE_ID, 1), else_=0)).label("disponible"),
+                    func.sum(case((Ejemplar.estado_id == settings.RESERVADO_EJEMPLAR_ID, 1), else_=0)).label("reservado"),
+                    func.sum(case((Ejemplar.estado_id == settings.PRESTADO_EJEMPLAR_NO_DISPONIBLE_ID, 1), else_=0)).label("prestado"),
+                    func.sum(case((Ejemplar.estado_id == 6, 1), else_=0)).label("danado"),
+                )
+                .where(Ejemplar.libro_id.in_(libro_ids))
+                .group_by(Ejemplar.libro_id)
+            )
+            counts_result = await db.execute(counts_stmt)
+            counts_rows = counts_result.all()
+            counts_map = {r.libro_id: r._asdict() for r in counts_rows}
+
+            items = []
+            from ..schemas.autor_sch import AutorSimpleView
+            for libro in libros:
+                item = LibroView.model_validate(libro)
+                item.autores = [AutorSimpleView.model_validate(a) for a in getattr(libro, "autores", [])]
+                c = counts_map.get(libro.id, {})
+                item.ejemplares_count = int(c.get("total", 0))
+                item.ejemplares_disponibles = int(c.get("disponible", 0))
+                item.ejemplares_reservados = int(c.get("reservado", 0))
+                item.ejemplares_prestados = int(c.get("prestado", 0))
+                item.ejemplares_danados = int(c.get("danado", 0))
+                items.append(item)
             return PaginatedResponse.create(items, total, pagination)
 
         # Sin paginación (comportamiento original)
         if normalizado:
             result = await db.execute(
-                select(Libro).options(selectinload(Libro.categoria))
+                select(Libro).options(
+                    selectinload(Libro.categoria),
+                    selectinload(Libro.autores),
+                    selectinload(Libro.ejemplar),
+                )
             )
             libros = result.scalars().all()
             return [LibroViewNormalized.from_model(libro) for libro in libros]
-        result = await db.execute(select(Libro))
+        result = await db.execute(
+            select(Libro).options(selectinload(Libro.autores))
+        )
         libros = result.scalars().all()
-        return [LibroView.model_validate(libro) for libro in libros]
+
+        # obtener conteos de ejemplares por libro en una sola consulta
+        libro_ids = [l.id for l in libros]
+        if libro_ids:
+            counts_stmt = (
+                select(
+                    Ejemplar.libro_id,
+                    func.count(Ejemplar.id).label("total"),
+                    func.sum(case((Ejemplar.estado_id == settings.DISPONIBILIDAD_EJEMPLAR_DISPONIBLE_ID, 1), else_=0)).label("disponible"),
+                    func.sum(case((Ejemplar.estado_id == settings.RESERVADO_EJEMPLAR_ID, 1), else_=0)).label("reservado"),
+                    func.sum(case((Ejemplar.estado_id == settings.PRESTADO_EJEMPLAR_NO_DISPONIBLE_ID, 1), else_=0)).label("prestado"),
+                    func.sum(case((Ejemplar.estado_id == 6, 1), else_=0)).label("danado"),
+                )
+                .where(Ejemplar.libro_id.in_(libro_ids))
+                .group_by(Ejemplar.libro_id)
+            )
+            counts_result = await db.execute(counts_stmt)
+            counts_rows = counts_result.all()
+            counts_map = {r.libro_id: r._asdict() for r in counts_rows}
+        else:
+            counts_map = {}
+
+        items = []
+        from ..schemas.autor_sch import AutorSimpleView
+        for libro in libros:
+            item = LibroView.model_validate(libro)
+            item.autores = [AutorSimpleView.model_validate(a) for a in getattr(libro, "autores", [])]
+            c = counts_map.get(libro.id, {})
+            item.ejemplares_count = int(c.get("total", 0))
+            item.ejemplares_disponibles = int(c.get("disponible", 0))
+            item.ejemplares_reservados = int(c.get("reservado", 0))
+            item.ejemplares_prestados = int(c.get("prestado", 0))
+            item.ejemplares_danados = int(c.get("danado", 0))
+            items.append(item)
+        return items
 
     @staticmethod
     async def obtener_libro_por_id(
@@ -78,18 +187,64 @@ class LibroService:
         if normalizado:
             result = await db.execute(
                 select(Libro)
-                .options(selectinload(Libro.categoria))
+                .options(
+                    selectinload(Libro.categoria),
+                    selectinload(Libro.autores),
+                )
                 .where(Libro.id == libro_id)
             )
             libro = result.scalar()
             if not libro:
                 raise HTTPException(status_code=404, detail="Libro no encontrado")
-            return LibroViewNormalized.from_model(libro)
-        result = await db.execute(select(Libro).where(Libro.id == libro_id))
+            # calcular counts sin cargar ejemplares
+            counts_stmt = (
+                select(
+                    func.count(Ejemplar.id).label("total"),
+                    func.sum(case((Ejemplar.estado_id == settings.DISPONIBILIDAD_EJEMPLAR_DISPONIBLE_ID, 1), else_=0)).label("disponible"),
+                    func.sum(case((Ejemplar.estado_id == settings.RESERVADO_EJEMPLAR_ID, 1), else_=0)).label("reservado"),
+                    func.sum(case((Ejemplar.estado_id == settings.PRESTADO_EJEMPLAR_NO_DISPONIBLE_ID, 1), else_=0)).label("prestado"),
+                    func.sum(case((Ejemplar.estado_id == 6, 1), else_=0)).label("danado"),
+                )
+                .where(Ejemplar.libro_id == libro.id)
+            )
+            counts_result = await db.execute(counts_stmt)
+            row = counts_result.first()
+            item = LibroViewNormalized.from_model(libro)
+            if row:
+                item.ejemplares_count = int(row.total or 0)
+                item.ejemplares_disponibles = int(row.disponible or 0)
+                item.ejemplares_reservados = int(row.reservado or 0)
+                item.ejemplares_prestados = int(row.prestado or 0)
+                item.ejemplares_danados = int(row.danado or 0)
+            return item
+        result = await db.execute(
+            select(Libro).options(selectinload(Libro.autores))
+            .where(Libro.id == libro_id)
+        )
         libro = result.scalar()
         if not libro:
             raise HTTPException(status_code=404, detail="Libro no encontrado")
-        return LibroView.model_validate(libro)
+        item = LibroView.model_validate(libro)
+        from ..schemas.autor_sch import AutorSimpleView
+        item.autores = [AutorSimpleView.model_validate(a) for a in getattr(libro, "autores", [])]
+
+        # obtener conteos de ejemplares para este libro
+        counts_stmt = select(
+            func.count(Ejemplar.id).label("total"),
+            func.sum(case((Ejemplar.estado_id == settings.DISPONIBILIDAD_EJEMPLAR_DISPONIBLE_ID, 1), else_=0)).label("disponible"),
+            func.sum(case((Ejemplar.estado_id == settings.RESERVADO_EJEMPLAR_ID, 1), else_=0)).label("reservado"),
+            func.sum(case((Ejemplar.estado_id == settings.PRESTADO_EJEMPLAR_NO_DISPONIBLE_ID, 1), else_=0)).label("prestado"),
+            func.sum(case((Ejemplar.estado_id == 6, 1), else_=0)).label("danado"),
+        ).where(Ejemplar.libro_id == libro.id)
+        counts_result = await db.execute(counts_stmt)
+        row = counts_result.first()
+        if row:
+            item.ejemplares_count = int(row.total or 0)
+            item.ejemplares_disponibles = int(row.disponible or 0)
+            item.ejemplares_reservados = int(row.reservado or 0)
+            item.ejemplares_prestados = int(row.prestado or 0)
+            item.ejemplares_danados = int(row.danado or 0)
+        return item
 
     @staticmethod
     async def actualizar_libro(
