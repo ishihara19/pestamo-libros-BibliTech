@@ -268,7 +268,12 @@ class LibroService:
         libro_id: int, libro_update: LibroUpdate, db: AsyncSession
     ) -> LibroView:
         """Actualizar un libro existente por su ID."""
-        result = await db.execute(select(Libro).where(Libro.id == libro_id))
+        # cargar autores eager-loaded para evitar que SQLAlchemy intente
+        # un lazy-load (que en async puede generar MissingGreenlet) al
+        # reasignar la colección `autores` más abajo.
+        result = await db.execute(
+            select(Libro).options(selectinload(Libro.autores)).where(Libro.id == libro_id)
+        )
         libro = result.scalar_one_or_none()
 
         if not libro:
