@@ -31,7 +31,12 @@ class LibroService:
         db.add(nuevo_libro)
         await db.commit()
         await db.refresh(nuevo_libro)
-        return LibroView.model_validate(nuevo_libro)
+        # volver a cargar con relaciones eager-loaded para evitar lazy-load asincrónico
+        result = await db.execute(
+            select(Libro).options(selectinload(Libro.autores), selectinload(Libro.categoria)).where(Libro.id == nuevo_libro.id)
+        )
+        libro_db = result.scalar_one()
+        return LibroView.model_validate(libro_db)
 
     @staticmethod
     async def listar_libros(
@@ -288,8 +293,12 @@ class LibroService:
         db.add(libro)
         await db.commit()
         await db.refresh(libro)
-
-        return LibroView.model_validate(libro)
+        # recargar con relaciones para evitar lazy-load asincrónico al serializar
+        result = await db.execute(
+            select(Libro).options(selectinload(Libro.autores), selectinload(Libro.categoria)).where(Libro.id == libro.id)
+        )
+        libro_db = result.scalar_one()
+        return LibroView.model_validate(libro_db)
 
     @staticmethod
     async def eliminar_libro(libro_id: int, db: AsyncSession) -> GenericMessage:
