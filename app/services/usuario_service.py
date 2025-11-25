@@ -16,6 +16,7 @@ from ..schemas.usuario_sch import (
     UsuarioMensaje,
     UsuarioReadNormalized,
     UsuarioUpdateAdmin,
+    UsuarioViewPrestamoNormalizado,
 )
 from ..core.security import hash_password, verify_password
 from ..utils.generar_token import generar_token
@@ -146,6 +147,24 @@ class UsuarioService:
         if normalizado:
             return UsuarioReadNormalized.from_model(usuario)
         return UsuarioView.model_validate(usuario)
+
+    @staticmethod
+    async def obtener_usuario_por_documento(
+        documento: str, db: AsyncSession
+    ) -> UsuarioViewPrestamoNormalizado| None:
+        """Obtener un usuario por su documento."""
+        result = await db.execute(select(Usuario)
+                                  .where(Usuario.documento == documento).
+                                  options(
+                                      selectinload(Usuario.estado),
+                                      selectinload(Usuario.tipo_documento)
+                                  ))
+        usuario = result.scalar()
+        
+        if not usuario:
+            return None
+       
+        return UsuarioViewPrestamoNormalizado.from_model(usuario)
 
     @staticmethod
     async def actualizar_usuarios_por_admin(

@@ -14,11 +14,13 @@ from ..schemas.usuario_sch import (
     UsuarioMensaje,
     UsuarioReadNormalized,
     UsuarioUpdateAdmin,
+    UsuarioViewPrestamoNormalizado,
 )
 from ..services.usuario_service import UsuarioService
 from ..dependencies.auth import (
     obtener_usuario_actual_administrador,
     obtener_usuario_actual_activo,
+    obtener_usuario_actual_administrador_o_bibliotecario,
 )
 from ..models.usuario import Usuario
 
@@ -173,3 +175,11 @@ async def eliminar_usuario(
     host = usuario_admin.host
     username = usuario_admin.username
     return await UsuarioService.eliminar_usuario(id, db, ip, host, username)
+
+@usuario_router.get("/{documento}/prestamo",status_code=200, response_model=UsuarioViewPrestamoNormalizado)
+async def obtener_usuario_por_documento(
+    documento: str,
+    db: AsyncSession = Depends(get_session),
+    usuario: Usuario = Depends(obtener_usuario_actual_administrador_o_bibliotecario)
+):
+    return await UsuarioService.obtener_usuario_por_documento(documento,db)

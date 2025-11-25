@@ -245,3 +245,27 @@ class UsuarioReadNormalized(BaseModel):
 
 class UsuarioMensaje(BaseModel):
     message: str
+    
+
+class UsuarioViewPrestamoNormalizado(BaseModel):
+    nombre_completo: Optional[str]
+    correo: str
+    documento: str
+    tipo_documento: str
+    estado: str
+    
+    model_config = ConfigDict(from_attributes=True)
+    
+    @classmethod
+    def from_model(cls, usuario):
+        nombre_completo = f"{usuario.nombre} {usuario.apellido}"
+        return cls(
+            nombre_completo=nombre_completo,
+            correo=usuario.correo,
+            documento=usuario.documento,
+            tipo_documento=(
+                usuario.tipo_documento.acronimo if usuario.tipo_documento else None
+            ),
+            estado=usuario.estado.nombre if usuario.estado else None,
+        )
+    
