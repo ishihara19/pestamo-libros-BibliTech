@@ -8,6 +8,7 @@ from typing import Optional
 
 from ..models.prestamo import Prestamo
 from ..models.usuario import Usuario
+from ..models.libro import Libro
 from ..models.ejemplar import Ejemplar
 from ..core.db.postgre import set_app_context, clear_app_context
 from ..utils.utils import generar_fecha_devolucion_prevista, ejemplar_disponible_info
@@ -15,14 +16,14 @@ from ..schemas.paginacion_sch import PaginationParams, PaginatedResponse
 from ..schemas.prestamo_sch import HacerPrestamo, PrestamoViewBibliotecario, PrestamoViewNormalizedBibliotecario, PrestamoViewNormalizedLector, ConfirmarEntregaPrestamo
 from ..schemas.generic_sch import GenericMessage
 from ..core.config import settings
-
+from ..utils.enviar_correo import enviar_correo_prestamo
 
 class PrestamoService:
     @staticmethod
     async def crear_prestamo(
         db: AsyncSession,
         prestamo_data: HacerPrestamo,
-        usuario_id: int,
+        usuario: Usuario,
         ip: str,
         host: str,
         username: str,
@@ -38,6 +39,11 @@ class PrestamoService:
             # Verificar disponibilidad del ejemplar
             ejemplar = await ejemplar_disponible_info(prestamo_data.libro_id, db)
 
+            libro_titulo = await db.execute(
+                select(Libro.titulo).where(Libro.id == prestamo_data.libro_id)
+            )
+            libro_titulo = libro_titulo.scalar_one_or_none()
+            print("TITULO DEL LIBRO:", libro_titulo)
             if ejemplar is None:
                 raise HTTPException(
                     status_code=400,
@@ -45,7 +51,7 @@ class PrestamoService:
                 )
             # Crear el préstamo
             nuevo_prestamo = Prestamo(
-                usuario_id=usuario_id,
+                usuario_id=usuario.id,
                 ejemplar_id=ejemplar["id"],
                 fecha_solicitud=prestamo_data.fecha_solicitud,
                 fecha_prevista_devolucion=fecha_prevista_devolucion,
@@ -62,6 +68,13 @@ class PrestamoService:
             await db.execute(stmt)
             # Confirmar los cambios
             await db.commit()
+            await enviar_correo_prestamo(
+                usuario.correo,
+                ejemplar["codigo_interno"],
+                libro_titulo,
+                fecha_prevista_devolucion.strftime("%Y-%m-%d"),
+                usuario.documento,
+                )
 
             return GenericMessage(
                 message=f"Préstamo creado exitosamente con el ejemplar {ejemplar['codigo_interno']}."

@@ -36,9 +36,9 @@ async def crear_prestamo(
     ip = usuario.ip
     host = usuario.host
     username = usuario.username
-    print(usuario.id)
+    
     return await PrestamoService.crear_prestamo(
-        db, prestamo_data, usuario.id, ip, host, username
+        db, prestamo_data, usuario, ip, host, username
     )
 
 
