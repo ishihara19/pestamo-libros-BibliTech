@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from fastapi import HTTPException
+from fastapi import HTTPException,status
 
 
 from ..models.categoria import Categoria
@@ -16,10 +16,24 @@ class CategoriaService:
         categoria: CategoriaCreate, db: AsyncSession
     ) -> CategoriaView:
         """Crear una nueva categoría en la base de datos."""
+
+        # Verificar si ya existe una categoría con ese nombre
+        query = select(Categoria).where(Categoria.nombre == categoria.nombre)
+        result = await db.execute(query)
+        categoria_existente = result.scalar_one_or_none()
+
+        if categoria_existente:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="La categoría ya existe."
+            )
+
+        # Crear nueva categoría
         nueva_categoria = Categoria(**categoria.model_dump())
         db.add(nueva_categoria)
         await db.commit()
         await db.refresh(nueva_categoria)
+
         return CategoriaView.model_validate(nueva_categoria)
 
     @staticmethod

@@ -22,7 +22,7 @@ class PrestamoViewBibliotecario(BaseModel):
     fecha_solicitud: datetime
     fecha_prevista_devolucion: date
     fecha_entrega: Optional[date]
-    fecha_devuelto: Optional[date]
+    fecha_devuelto: Optional[datetime]
     creado_en: datetime
     actualizado_en: Optional[datetime]
 

@@ -100,7 +100,8 @@ class EjemplarService:
         if estado_update.estado_id not in [
             settings.DISPONIBILIDAD_EJEMPLAR_DISPONIBLE_ID,
             settings.PRESTADO_EJEMPLAR_NO_DISPONIBLE_ID,
-            settings.RESERVADO_EJEMPLAR_ID
+            settings.RESERVADO_EJEMPLAR_ID,
+            settings.DAÑADO_EJEMPLAR_ID
             ]: 
             raise HTTPException(status_code=400, detail="El estado no es válido para actualizar el ejemplar") 
               
