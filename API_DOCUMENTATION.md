@@ -2,7 +2,9 @@
 
 API RESTful para la gestión de préstamo de libros.
 
-**Prefijo de API:** `/api/v`
+**Prefijo de API:** `/api/v` (configurable mediante la variable de entorno `PREFIX_API_VERSION`)
+
+> **Nota:** El prefijo completo debe incluir el número de versión (ej: `/api/v1`). Configurar en las variables de entorno.
 
 ---
 
@@ -224,3 +226,15 @@ La API utiliza autenticación JWT (JSON Web Token). Para acceder a endpoints pro
 - **Administrador**: Acceso completo a todos los endpoints
 - **Bibliotecario**: Gestión de préstamos, libros, autores, categorías y ejemplares
 - **Lector**: Acceso a sus propios préstamos y consulta de libros
+
+---
+
+## Notas sobre la Implementación Actual
+
+Algunos endpoints devuelven código `200` con mensajes de error en el cuerpo de la respuesta en lugar de usar códigos de estado HTTP apropiados (como `404`). Esto aplica específicamente a:
+
+- `POST /prestamos/confirmar-entrega`: Devuelve `200` con mensaje de error si no existe el préstamo
+- `POST /prestamos/{codigo_interno}/confirmar-devolucion`: Devuelve `200` con mensaje de error si no existe el préstamo
+- `GET /usuarios/{documento}/prestamo`: Devuelve `200` con `null` si no se encuentra el usuario
+
+Se recomienda verificar siempre el contenido del mensaje de respuesta para estos endpoints.
