@@ -103,4 +103,4 @@ async def obtener_auditoria(
     usuario_admin: bool = Depends(obtener_usuario_actual_administrador),
 ):
     """Obtener un registro de auditoría por su ID"""
-    return await AuditoriaService.obtener_auditoria(id, db)   
+    return await AuditoriaService.obtener_auditoria_por_id(id, db)   
