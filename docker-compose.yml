@@ -1,0 +1,83 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: biblitech-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-biblitech}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-biblitech123}
+      POSTGRES_DB: ${POSTGRES_DB:-biblitech}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-biblitech}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: biblitech-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Database configuration
+      POSTGRES_USER: ${POSTGRES_USER:-biblitech}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-biblitech123}
+      POSTGRES_DB: ${POSTGRES_DB:-biblitech}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      
+      # API configuration
+      PREFIX_API_VERSION: ${PREFIX_API_VERSION:-/api/v}
+      
+      # Timezone configuration
+      TZ_INFO: ${TZ_INFO:-America/Bogota}
+      
+      # JWT configuration
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      
+      # Password reset token configuration
+      PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: ${PASSWORD_RESET_TOKEN_EXPIRE_MINUTES:-15}
+      
+      # Email configuration
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_FROM: ${MAIL_FROM}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_SERVER: ${MAIL_SERVER:-smtp.gmail.com}
+      
+      # Roles and states configuration
+      ROL_ADMIN: ${ROL_ADMIN:-1}
+      ROL_BIBLIOTECARIO: ${ROL_BIBLIOTECARIO:-2}
+      ESTADO_ACTIVO: ${ESTADO_ACTIVO:-1}
+      ESTADO_INACTIVO: ${ESTADO_INACTIVO:-2}
+      DOCUMENTO_MAYOR_EDAD_ID: ${DOCUMENTO_MAYOR_EDAD_ID:-1}
+      DOCUMENTO_MENOR_EDAD_ID: ${DOCUMENTO_MENOR_EDAD_ID:-2}
+      EDAD_MINIMA_USUARIO: ${EDAD_MINIMA_USUARIO:-13}
+      
+      # Cloudflare R2 configuration
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
+      R2_BUCKET_NAME: ${R2_BUCKET_NAME}
+      R2_DOMINIO: ${R2_DOMINIO}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app:ro
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  postgres_data:
+    driver: local
