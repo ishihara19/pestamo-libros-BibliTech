@@ -32,8 +32,9 @@ venv.bak/
 *.swo
 *~
 
-# Documentation
-*.md
+# Documentation (keep README.md, exclude others)
+DOCKER.md
+API_DOCUMENTATION.md
 docs/
 
 # Test files

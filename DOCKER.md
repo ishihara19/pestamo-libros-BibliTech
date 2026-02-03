@@ -28,6 +28,12 @@ Edita el archivo `.env` con tus valores específicos. Las variables más importa
 
 ### 2. Iniciar los Servicios
 
+⚠️ **Nota importante sobre el directorio de la aplicación**: 
+El archivo `docker-compose.yml` incluye una configuración de desarrollo que monta el directorio `./app` del repositorio dentro del contenedor. Asegúrate de que:
+- Estás ejecutando `docker compose up` desde la raíz del repositorio
+- El directorio `app` existe y contiene el código de la aplicación
+- Si el contenedor falla al iniciar, verifica que la ruta del volumen sea correcta
+
 Para iniciar la aplicación y la base de datos:
 
 ```bash
@@ -138,15 +144,31 @@ docker run -d \
 
 ## Modo Producción
 
+⚠️ **IMPORTANTE**: La configuración por defecto en `docker-compose.yml` está optimizada para desarrollo con hot-reload activado. Para producción, debes hacer los siguientes cambios:
+
 Para ejecutar en producción, considera los siguientes cambios:
 
 ### 1. Modificar el docker-compose.yml
 
-En el servicio `app`, cambia el comando para no usar `--reload`:
+En el servicio `app`, realiza estos cambios:
 
+a) **Elimina o comenta el volumen de desarrollo**:
 ```yaml
+# Comentar o eliminar esta línea:
+# volumes:
+#   - ./app:/app/app:ro
+```
+
+b) **Cambia el comando para producción**:
+```yaml
+# Cambia de:
+command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+# A:
 command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 ```
+
+El número de workers (4) puede ajustarse según tu servidor. Una regla común es `(2 x número_de_cores) + 1`.
 
 ### 2. Variables de Entorno Críticas
 
